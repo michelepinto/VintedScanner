@@ -73,7 +73,10 @@ def send_email(item_title, item_price, item_url, item_image):
         msg["Message-ID"] = email.utils.make_msgid()
 
         # Format message content
-        body = f"{item_title}\n{item_price}\n🔗 {item_url}\n📷 {item_image}"
+        body_lines = [item_title, str(item_price), f"🔗 {item_url}"]
+        if item_image:
+            body_lines.append(f"📷 {item_image}")
+        body = "\n".join(body_lines)
 
         msg.set_content(body)
         
@@ -101,7 +104,10 @@ def send_slack_message(item_title, item_price, item_url, item_image):
     webhook_url = Config.slack_webhook_url 
 
     # Format message content
-    message = f"*{item_title}*\n🏷️ {item_price}\n🔗 {item_url}\n📷 {item_image}"
+    message_lines = [f"*{item_title}*", f"🏷️ {item_price}", f"🔗 {item_url}"]
+    if item_image:
+        message_lines.append(f"📷 {item_image}")
+    message = "\n".join(message_lines)
     slack_data = {"text": message}
 
     try:
@@ -124,7 +130,10 @@ def send_slack_message(item_title, item_price, item_url, item_image):
 def send_telegram_message(item_title, item_price, item_url, item_image):
 
     # Format message content
-    message = f"<b>{item_title}*</b>\n🏷️ {item_price}\n🔗 {item_url}\n📷 {item_image}"
+    message_lines = [f"<b>{item_title}</b>", f"🏷️ {item_price}", f"🔗 {item_url}"]
+    if item_image:
+        message_lines.append(f"📷 {item_image}")
+    message = "\n".join(message_lines)
 
     try:
         url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
@@ -169,8 +178,16 @@ def main():
                 item_id = str(item["id"])
                 item_title = item["title"]
                 item_url = item["url"]
-                item_price = f'{item["price"]["amount"]} {item["price"]["currency_code"]}'
-                item_image = item["photo"]["full_size_url"]
+                item_price_data = item.get("price") or {}
+                item_amount = item_price_data.get("amount")
+                item_currency = item_price_data.get("currency_code")
+                if item_amount is not None and item_currency:
+                    item_price = f"{item_amount} {item_currency}"
+                else:
+                    item_price = "N/D"
+
+                item_photo = item.get("photo") or {}
+                item_image = item_photo.get("full_size_url")
 
                 # Check if the item has already been analyzed to prevent duplicates
                 if item_id not in list_analyzed_items:
