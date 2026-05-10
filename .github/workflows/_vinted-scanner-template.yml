@@ -38,13 +38,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
+      
+          cp vinted_items.txt /tmp/vinted_items_new.txt
+      
+          git fetch origin master
+          git checkout origin/master -- vinted_items.txt || touch vinted_items.txt
+      
+          cat vinted_items.txt /tmp/vinted_items_new.txt | sort -u > vinted_items_merged.txt
+          mv vinted_items_merged.txt vinted_items.txt
+      
           git add vinted_items.txt
-
+      
           if git diff --cached --quiet; then
             echo "No new items to commit."
           else
             git commit -m "Update Vinted seen items."
-            git pull --rebase origin master
             git push origin HEAD:master
           fi
