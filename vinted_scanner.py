@@ -176,6 +176,11 @@ def main():
         data = response.json()
 
         if data:
+
+            for item in data["items"]:
+              print(json.dumps(item, indent=2, ensure_ascii=False))
+              break
+  
             # Process each item returned in the response
             for item in data["items"]:
                 item_id = str(item["id"])
