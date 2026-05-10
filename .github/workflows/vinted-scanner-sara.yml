@@ -7,25 +7,6 @@ on:
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Create Config.py
-        run: |
-          cat > Config.py <<'PYCONFIG'
-          ${{ secrets.VINTED_CONFIG_SARA }}
-          PYCONFIG
-
-      - name: Run scanner
-        run: python3 vinted_scanner.py
+    uses: ./.github/workflows/_vinted-scanner-template.yml
+    secrets:
+      vinted_config: ${{ secrets.VINTED_CONFIG_SARA }}
