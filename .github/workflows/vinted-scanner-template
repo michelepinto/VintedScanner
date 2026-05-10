@@ -1,0 +1,40 @@
+name: Vinted Scanner Template
+
+on:
+  workflow_call:
+    secrets:
+      vinted_config:
+        required: true
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Restore seen items cache
+        uses: actions/cache@v4
+        with:
+          path: vinted_items.txt
+          key: vinted-items-${{ github.workflow }}-${{ github.run_id }}
+          restore-keys: |
+            vinted-items-${{ github.workflow }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create Config.py
+        run: |
+          cat > Config.py <<'PYCONFIG'
+          ${{ secrets.vinted_config }}
+          PYCONFIG
+
+      - name: Run scanner
+        run: python3 vinted_scanner.py
