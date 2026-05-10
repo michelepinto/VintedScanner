@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: "12,27,42,57 * * * *"
 
+permissions:
+  contents: write
+
 jobs:
   scan:
     uses: ./.github/workflows/_vinted-scanner-template.yml
