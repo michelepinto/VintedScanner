@@ -65,7 +65,7 @@ def save_analyzed_item(hash):
         sys.exit()
 
 # Send notification e-mail when a new item is found
-def send_email(item_title, item_price, item_url, item_image):
+def send_email(item_brand, item_title, item_price, item_url, item_image):
     try:
         # Create the e-mail message
         msg = EmailMessage()
@@ -76,7 +76,7 @@ def send_email(item_title, item_price, item_url, item_image):
         msg["Message-ID"] = email.utils.make_msgid()
 
         # Format message content
-        body_lines = [item_title, str(item_price), f"🔗 {item_url}"]
+        body_lines = [item_brand, item_title, str(item_price), f"🔗 {item_url}"]
         if item_image:
             body_lines.append(f"📷 {item_image}")
         body = "\n".join(body_lines)
@@ -103,11 +103,11 @@ def send_email(item_title, item_price, item_url, item_image):
 
 
 # Send a Slack message when a new item is found
-def send_slack_message(item_title, item_price, item_url, item_image):
+def send_slack_message(item_brand, item_title, item_price, item_url, item_image):
     webhook_url = Config.slack_webhook_url 
 
     # Format message content
-    message_lines = [f"*{item_title}*", f"🏷️ {item_price}", f"🔗 {item_url}"]
+    message_lines = [f"*{item_brand}*", f"*{item_title}*", f"🏷️ {item_price}", f"🔗 {item_url}"]
     if item_image:
         message_lines.append(f"📷 {item_image}")
     message = "\n".join(message_lines)
@@ -130,10 +130,10 @@ def send_slack_message(item_title, item_price, item_url, item_image):
         logging.error(f"Error sending Slack message: {e}")
 
 # Send a Telegram message when a new item is found
-def send_telegram_message(item_title, item_price, item_url, item_image):
+def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
 
     # Format message content
-    message_lines = [f"<b>{item_title}</b>", f"🏷️ {item_price}", f"🔗 {item_url}"]
+    message_lines = [f"<b>{item_brand}</b>", f"<b>{item_title}</b>", f"🏷️ {item_price}", f"🔗 {item_url}"]
     if item_image:
         message_lines.append(f"📷 {item_image}")
     message = "\n".join(message_lines)
@@ -184,6 +184,7 @@ def main():
             # Process each item returned in the response
             for item in data["items"]:
                 item_id = str(item["id"])
+                item_brand = item.get("brand", "Brand non specificato")
                 item_title = item["title"]
                 item_url = item["url"]
                 item_price_data = item.get("price") or {}
@@ -202,15 +203,15 @@ def main():
 
                     # Send e-mail notifications if configured
                     if Config.smtp_username and Config.smtp_server:
-                        send_email(item_title, item_price,item_url, item_image)
+                        send_email(item_brand, item_title, item_price,item_url, item_image)
 
                     # Send Slack notifications if configured
                     if Config.slack_webhook_url:
-                        send_slack_message(item_title, item_price, item_url, item_image)
+                        send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 
                     # Send Telegram notifications if configured
                     if Config.telegram_bot_token and Config.telegram_chat_id:
-                        send_telegram_message(item_title, item_price, item_url, item_image)
+                        send_telegram_message(item_brand, item_title, item_price, item_url, item_image)
 
                     # Mark item as analyzed and save it
                     list_analyzed_items.add(item_id)
