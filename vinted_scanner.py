@@ -184,7 +184,7 @@ def main():
             # Process each item returned in the response
             for item in data["items"]:
                 item_id = str(item["id"])
-                item_brand = item.get("brand", "Brand non specificato")
+                item_brand = item.get("brand_title", "Brand non specificato")
                 item_title = item["title"]
                 item_url = item["url"]
                 item_price_data = item.get("price") or {}
