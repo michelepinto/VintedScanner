@@ -107,7 +107,7 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
     webhook_url = Config.slack_webhook_url 
 
     # Format message content
-    message_lines = [f"*Brand/Categoria: {item_brand}*", f"*{item_title}*", f"🏷️ {item_price}", f"🔗 {item_url}"]
+    message_lines = [f"*🏷️ {item_brand}*", f"*📌 {item_title}*", f"💰 {item_price}", f"🔗 {item_url}"]
     if item_image:
         message_lines.append(f"📷 {item_image}")
     message = "\n".join(message_lines)
@@ -133,7 +133,7 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
 
     # Format message content
-    message_lines = [f"<b>Brand/Categoria: {item_brand}</b>", f"<b>{item_title}</b>", f"🏷️ {item_price}", f"🔗 {item_url}"]
+    message_lines = [f"<b>🏷️ {item_brand}</b>", f"<b>📌 {item_title}</b>", f"💰 {item_price}", f"🔗 {item_url}"]
     if item_image:
         message_lines.append(f"📷 {item_image}")
     message = "\n".join(message_lines)
