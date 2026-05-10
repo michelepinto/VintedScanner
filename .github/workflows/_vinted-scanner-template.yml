@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Restore seen items cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vinted_items.txt
           key: vinted-items-${{ github.workflow }}-${{ github.run_id }}
