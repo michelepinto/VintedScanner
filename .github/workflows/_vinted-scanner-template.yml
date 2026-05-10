@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: vinted-scanner-master
+  cancel-in-progress: false
+
 jobs:
   scan:
     runs-on: ubuntu-latest
