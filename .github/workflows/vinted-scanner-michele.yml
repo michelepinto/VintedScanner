@@ -3,7 +3,7 @@ name: Vinted Scanner Michele
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "7,22,37,52 * * * *"
 
 jobs:
   scan:
