@@ -1,4 +1,4 @@
-name: Vinted Scanner Michele
+name: Vinted Scanner Sara
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Create Config.py
         run: |
           cat > Config.py <<'PYCONFIG'
-          ${{ secrets.VINTED_CONFIG_MICHELE }}
+          ${{ secrets.VINTED_CONFIG_SARA }}
           PYCONFIG
 
       - name: Run scanner
