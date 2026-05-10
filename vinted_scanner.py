@@ -23,7 +23,7 @@ logging.basicConfig(handlers=[handler],
 timeoutconnection = 30
 
 # List to keep track of already analyzed items
-list_analyzed_items = []
+list_analyzed_items = set()
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0",
@@ -46,8 +46,11 @@ def load_analyzed_item():
     try:
         with open("vinted_items.txt", "r", errors="ignore") as f:
             for line in f:
-                if line:
-                    list_analyzed_items.append(line.rstrip())
+                item_id = line.strip()
+                if item_id:
+                    list_analyzed_items.add(item_id)
+    except FileNotFoundError:
+        logging.info("No previous vinted_items.txt found, starting fresh")
     except IOError as e:
         logging.error(e, exc_info=True)
         sys.exit()
@@ -205,7 +208,7 @@ def main():
                         send_telegram_message(item_title, item_price, item_url, item_image)
 
                     # Mark item as analyzed and save it
-                    list_analyzed_items.append(item_id)
+                    list_analyzed_items.add(item_id)
                     save_analyzed_item(item_id)
 
 if __name__ == "__main__":
