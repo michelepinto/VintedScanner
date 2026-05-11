@@ -132,7 +132,7 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 # Send a Telegram message when a new item is found
 def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
     caption = "\n".join([
-        f"🆕 🌍 <b>{item_brand}</b> – {item_title}",
+        f"🏷️ <b>{item_brand}</b> – {item_title}",
         f"💰 {item_price}",
         f"🔗 {item_url}",
     ])
@@ -192,8 +192,8 @@ def main():
                 item_title = item["title"]
                 item_url = item["url"]
                 item_price_data = item.get("price") or {}
-                item_amount = item_price_data.get("amount")
-                item_currency = item_price_data.get("currency_code")
+                item_amount = f"{float(item_price_data.get("amount")):.2f}".replace(".", ",")    
+                item_currency = '€' # item_price_data.get("currency_code")
                 if item_amount is not None and item_currency:
                     item_price = f"{item_amount} {item_currency}"
                 else:
