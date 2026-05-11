@@ -131,28 +131,36 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 
 # Send a Telegram message when a new item is found
 def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
-
-    # Format message content
-    message_lines = [f"<b>🏷️ {item_brand}</b>", f"<b>🆕 {item_title}</b>", f"💰 {item_price}", f"🔗 {item_url}"]
-    if item_image:
-        message_lines.append(f"📷 {item_image}")
-    message = "\n".join(message_lines)
+    caption = "\n".join([
+        f"🆕 🌍 <b>{item_brand}</b> – {item_title}",
+        f"💰 {item_price}",
+        f"🔗 {item_url}",
+    ])
 
     try:
-        url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
+        if item_image:
+            url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendPhoto"
+            params = {
+                "chat_id": Config.telegram_chat_id,
+                "photo": item_image,
+                "caption": caption,
+                "parse_mode": "HTML",
+            }
+        else:
+            url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
+            params = {
+                "chat_id": Config.telegram_chat_id,
+                "text": caption,
+                "parse_mode": "HTML",
+            }
 
-        params = {
-            "chat_id": Config.telegram_chat_id,
-            "text": message,
-            "parse_mode": "HTML",
-            "link_preview_options":  json.dumps({
-                "is_disabled": True
-            })
-        }
+        response = requests.post(url, params=params, headers=headers, timeout=timeoutconnection)
 
-        response = requests.post(url, params=params, headers=headers)
         if response.status_code != 200:
-            logging.error(f"Telegram notification failed. Status code: {response.status_code}, Response: {response.text}")
+            logging.error(
+                f"Telegram notification failed. "
+                f"Status code: {response.status_code}, Response: {response.text}"
+            )
         else:
             logging.info("Telegram notification sent")
 
