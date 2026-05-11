@@ -134,7 +134,7 @@ def send_telegram_message(item_brand, item_title, item_price, item_url, item_ima
     caption = "\n".join([
         f"🏷️ <b>{item_brand}</b> – {item_title}",
         f"💰 {item_price}",
-        f"🔗 {item_url}",
+        f'🔗 <a href="{item_url}">Guardalo su Vinted</a>',
     ])
 
     try:
