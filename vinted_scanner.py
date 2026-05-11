@@ -131,6 +131,12 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 
 # Send a Telegram message when a new item is found
 def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
+    from html import escape
+
+    safe_brand = escape(str(item_brand))
+    safe_title = escape(str(item_title))
+    safe_url = escape(str(item_url), quote=True)
+    
     caption = "\n".join([
         f'🔗 <a href="{safe_url}"><b>{safe_brand}</b> – {safe_title}</a>',
         f"💰 {item_price}",
