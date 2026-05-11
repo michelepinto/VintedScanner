@@ -132,9 +132,8 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 # Send a Telegram message when a new item is found
 def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
     caption = "\n".join([
-        f"🏷️ <b>{item_brand}</b> – {item_title}",
+        f'🔗 <a href="{safe_url}"><b>{safe_brand}</b> – {safe_title}</a>',
         f"💰 {item_price}",
-        f'🔗 <a href="{item_url}">Guardalo su Vinted</a>',
     ])
 
     try:
