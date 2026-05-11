@@ -192,7 +192,12 @@ def main():
                 item_title = item["title"]
                 item_url = item["url"]
                 item_price_data = item.get("price") or {}
-                item_amount = f"{float(item_price_data.get("amount")):.2f}".replace(".", ",")    
+                amount = item_price_data.get("amount")
+                item_amount = (
+                    f"{float(amount):.2f}".replace(".", ",")
+                    if amount is not None
+                    else "N/D"
+                )   
                 item_currency = '€' # item_price_data.get("currency_code")
                 if item_amount is not None and item_currency:
                     item_price = f"{item_amount} {item_currency}"
