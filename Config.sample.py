@@ -14,6 +14,9 @@ telegram_chat_id = ""
 # Vinted URL: change the TLD according to your country (.fr, .es, etc.)
 vinted_url = "https://www.vinted.it"
 
+# Comma-separated list of strings to exclude from results (case-insensitive)
+excluded_keywords = ""
+
 # Vinted queries for research
 # "page", "per_page" and "order" you may not edit them
 # "search_text" is the free search field, this field may be empty if you wish to search for the entire brand.
