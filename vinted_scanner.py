@@ -172,6 +172,14 @@ def send_telegram_message(item_brand, item_title, item_price, item_url, item_ima
     except requests.exceptions.RequestException as e:
         logging.error(f"Error sending Telegram message: {e}")
 
+def is_excluded(item_title, item_description, excluded_keywords_str):
+    """Return True if the item title or description contains any excluded keyword."""
+    if not excluded_keywords_str:
+        return False
+    keywords = [kw.strip().lower() for kw in excluded_keywords_str.split(",") if kw.strip()]
+    text = f"{item_title} {item_description}".lower()
+    return any(kw in text for kw in keywords)
+
 def main():
     # Load the list of previously analyzed items
     load_analyzed_item()
@@ -180,7 +188,7 @@ def main():
     session = requests.Session()
     session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
     cookies = session.cookies.get_dict()
-    
+
     # Loop through each search query defined in Config.py
     for params in Config.queries:
         # Request items from the Vinted API based on the search parameters
@@ -189,12 +197,12 @@ def main():
         data = response.json()
 
         if data:
-  
             # Process each item returned in the response
             for item in data["items"]:
                 item_id = str(item["id"])
                 item_brand = item.get("brand_title") or "N/A"
                 item_title = item["title"]
+                item_description = item.get("description") or ""
                 item_url = item["url"]
                 item_price_data = item.get("price") or {}
                 amount = item_price_data.get("amount")
@@ -202,22 +210,24 @@ def main():
                     f"{float(amount):.2f}".replace(".", ",")
                     if amount is not None
                     else "N/D"
-                )   
-                item_currency = '€' # item_price_data.get("currency_code")
-                if item_amount is not None and item_currency:
-                    item_price = f"{item_amount} {item_currency}"
-                else:
-                    item_price = "N/D"
+                )
+                item_currency = '€'
+                item_price = f"{item_amount} {item_currency}" if item_amount else "N/D"
 
                 item_photo = item.get("photo") or {}
                 item_image = item_photo.get("full_size_url")
+
+                # Skip items whose title or description match any excluded keyword
+                if is_excluded(item_title, item_description, Config.excluded_keywords):
+                    logging.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                    continue
 
                 # Check if the item has already been analyzed to prevent duplicates
                 if item_id not in list_analyzed_items:
 
                     # Send e-mail notifications if configured
                     if Config.smtp_username and Config.smtp_server:
-                        send_email(item_brand, item_title, item_price,item_url, item_image)
+                        send_email(item_brand, item_title, item_price, item_url, item_image)
 
                     # Send Slack notifications if configured
                     if Config.slack_webhook_url:
