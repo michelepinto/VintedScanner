@@ -177,7 +177,7 @@ def send_telegram_message(item_brand, item_title, item_price, item_url, item_ima
 def normalize(text):
     return unicodedata.normalize("NFKD", text).lower()
 
-def is_excluded(item_title, item_description, excluded_keywords_str):
+def is_excluded(item_title, item_description, item_brand, excluded_keywords_str):
     if not excluded_keywords_str:
         return False
 
@@ -186,7 +186,7 @@ def is_excluded(item_title, item_description, excluded_keywords_str):
         for kw in excluded_keywords_str.split(",")
         if kw.strip()
     ]
-    text = normalize(f"{item_title} {item_description}")
+    text = normalize(f"{item_title} {item_description} {item_brand}")
 
     return any(kw in text for kw in keywords)
 
@@ -228,7 +228,7 @@ def main():
                 item_image = item_photo.get("full_size_url")
 
                 # Skip items whose title or description match any excluded keyword
-                if is_excluded(item_title, item_description, Config.excluded_keywords):
+                if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
                     logging.info(f"Skipping excluded item [{item_id}]: {item_title}")
                     continue
 
