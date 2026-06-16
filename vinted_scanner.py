@@ -7,6 +7,8 @@ import smtplib
 import logging
 import requests
 import email.utils
+import unicodedata
+
 from datetime import datetime
 from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
@@ -172,12 +174,20 @@ def send_telegram_message(item_brand, item_title, item_price, item_url, item_ima
     except requests.exceptions.RequestException as e:
         logging.error(f"Error sending Telegram message: {e}")
 
+def normalize(text):
+    return unicodedata.normalize("NFKD", text).lower()
+
 def is_excluded(item_title, item_description, excluded_keywords_str):
-    """Return True if the item title or description contains any excluded keyword."""
     if not excluded_keywords_str:
         return False
-    keywords = [kw.strip().lower() for kw in excluded_keywords_str.split(",") if kw.strip()]
-    text = f"{item_title} {item_description}".lower()
+
+    keywords = [
+        normalize(kw.strip())
+        for kw in excluded_keywords_str.split(",")
+        if kw.strip()
+    ]
+    text = normalize(f"{item_title} {item_description}")
+
     return any(kw in text for kw in keywords)
 
 def main():
