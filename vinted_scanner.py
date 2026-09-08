@@ -202,54 +202,71 @@ def main():
     # Loop through each search query defined in Config.py
     for params in Config.queries:
         # Request items from the Vinted API based on the search parameters
-        response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers)
+        try:
+            response = requests.get(
+                f"{Config.vinted_url}/api/v2/catalog/items",
+                params=params,
+                cookies=cookies,
+                headers=headers,
+                timeout=timeoutconnection,
+            )
+            response.raise_for_status()
+            data = response.json()
+        except (requests.exceptions.RequestException, ValueError) as e:
+            logging.error(f"Unable to fetch Vinted items: {e}")
+            continue
 
-        data = response.json()
+        items = data.get("items") if isinstance(data, dict) else None
+        if not isinstance(items, list):
+            logging.error(
+                "Vinted response did not contain an items list "
+                f"(status={response.status_code}, keys={list(data) if isinstance(data, dict) else 'N/A'})"
+            )
+            continue
 
-        if data:
-            # Process each item returned in the response
-            for item in data["items"]:
-                item_id = str(item["id"])
-                item_brand = item.get("brand_title") or "N/A"
-                item_title = item["title"]
-                item_description = item.get("description") or ""
-                item_url = item["url"]
-                item_price_data = item.get("price") or {}
-                amount = item_price_data.get("amount")
-                item_amount = (
-                    f"{float(amount):.2f}".replace(".", ",")
-                    if amount is not None
-                    else "N/D"
-                )
-                item_currency = '€'
-                item_price = f"{item_amount} {item_currency}" if item_amount else "N/D"
+        # Process each item returned in the response
+        for item in items:
+            item_id = str(item["id"])
+            item_brand = item.get("brand_title") or "N/A"
+            item_title = item["title"]
+            item_description = item.get("description") or ""
+            item_url = item["url"]
+            item_price_data = item.get("price") or {}
+            amount = item_price_data.get("amount")
+            item_amount = (
+                f"{float(amount):.2f}".replace(".", ",")
+                if amount is not None
+                else "N/D"
+            )
+            item_currency = '€'
+            item_price = f"{item_amount} {item_currency}" if item_amount else "N/D"
 
-                item_photo = item.get("photo") or {}
-                item_image = item_photo.get("full_size_url")
+            item_photo = item.get("photo") or {}
+            item_image = item_photo.get("full_size_url")
 
-                # Skip items whose title or description match any excluded keyword
-                if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
-                    logging.info(f"Skipping excluded item [{item_id}]: {item_title}")
-                    continue
+            # Skip items whose title or description match any excluded keyword
+            if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
+                logging.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                continue
 
-                # Check if the item has already been analyzed to prevent duplicates
-                if item_id not in list_analyzed_items:
+            # Check if the item has already been analyzed to prevent duplicates
+            if item_id not in list_analyzed_items:
 
-                    # Send e-mail notifications if configured
-                    if Config.smtp_username and Config.smtp_server:
-                        send_email(item_brand, item_title, item_price, item_url, item_image)
+                # Send e-mail notifications if configured
+                if Config.smtp_username and Config.smtp_server:
+                    send_email(item_brand, item_title, item_price, item_url, item_image)
 
-                    # Send Slack notifications if configured
-                    if Config.slack_webhook_url:
-                        send_slack_message(item_brand, item_title, item_price, item_url, item_image)
+                # Send Slack notifications if configured
+                if Config.slack_webhook_url:
+                    send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 
-                    # Send Telegram notifications if configured
-                    if Config.telegram_bot_token and Config.telegram_chat_id:
-                        send_telegram_message(item_brand, item_title, item_price, item_url, item_image)
+                # Send Telegram notifications if configured
+                if Config.telegram_bot_token and Config.telegram_chat_id:
+                    send_telegram_message(item_brand, item_title, item_price, item_url, item_image)
 
-                    # Mark item as analyzed and save it
-                    list_analyzed_items.add(item_id)
-                    save_analyzed_item(item_id)
+                # Mark item as analyzed and save it
+                list_analyzed_items.add(item_id)
+                save_analyzed_item(item_id)
 
 if __name__ == "__main__":
     main()
