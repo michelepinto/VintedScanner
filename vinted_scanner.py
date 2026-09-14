@@ -223,7 +223,6 @@ def main():
             data = response.json()
         except (requests.exceptions.RequestException, ValueError) as e:
             logger.error(f"Unable to fetch Vinted items: {e}")
-            continue
 
         items = data.get("items") if isinstance(data, dict) else None
         if not isinstance(items, list):
