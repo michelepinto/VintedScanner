@@ -192,9 +192,11 @@ def is_excluded(item_title, item_description, item_brand, excluded_keywords_str)
 
 def main():
     # Load the list of previously analyzed items
+    logging.info("Loading the list of previously analyzed items")
     load_analyzed_item()
 
     # Initialize session and obtain session cookies from Vinted
+    logging.info("Initializing session and obtain session cookies from Vinted")
     session = requests.Session()
     session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
     cookies = session.cookies.get_dict()
