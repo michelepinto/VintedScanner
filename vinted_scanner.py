@@ -17,9 +17,16 @@ from logging.handlers import RotatingFileHandler
 # Configure a rotating file handler to manage log files
 handler = RotatingFileHandler("vinted_scanner.log", maxBytes=5000000, backupCount=5)
 
-logging.basicConfig(handlers=[handler], 
-                    format="%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s", 
-                    level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+
+logger = logging.getLogger(__name__)
+
+logger.info("Scanner started")
+
 
 # Timeout configuration for the requests
 timeoutconnection = 30
@@ -52,9 +59,9 @@ def load_analyzed_item():
                 if item_id:
                     list_analyzed_items.add(item_id)
     except FileNotFoundError:
-        logging.info("No previous vinted_items.txt found, starting fresh")
+        logger.info("No previous vinted_items.txt found, starting fresh")
     except IOError as e:
-        logging.error(e, exc_info=True)
+        logger.error(e, exc_info=True)
         sys.exit()
 
 # Save a new analyzed item to prevent repeated alerts
@@ -63,7 +70,7 @@ def save_analyzed_item(hash):
         with open("vinted_items.txt", "a") as f:
             f.write(str(hash) + "\n")
     except IOError as e:
-        logging.error(e, exc_info=True)
+        logger.error(e, exc_info=True)
         sys.exit()
 
 # Send notification e-mail when a new item is found
@@ -96,12 +103,12 @@ def send_email(item_brand, item_title, item_price, item_url, item_image):
             
             # Sending the message
             smtpserver.send_message(msg)
-            logging.info("E-mail sent")
+            logger.info("E-mail sent")
     
     except smtplib.SMTPException as e:
-        logging.error(f"SMTP error sending email: {e}", exc_info=True)
+        logger.error(f"SMTP error sending email: {e}", exc_info=True)
     except Exception as e:
-        logging.error(f"Error sending email: {e}", exc_info=True)
+        logger.error(f"Error sending email: {e}", exc_info=True)
 
 
 # Send a Slack message when a new item is found
@@ -124,12 +131,12 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
         )
 
         if response.status_code != 200:
-            logging.error(f"Slack notification failed: {response.status_code}, {response.text}")
+            logger.error(f"Slack notification failed: {response.status_code}, {response.text}")
         else:
-            logging.info("Slack notification sent")
+            logger.info("Slack notification sent")
 
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error sending Slack message: {e}")
+        logger.error(f"Error sending Slack message: {e}")
 
 # Send a Telegram message when a new item is found
 def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
@@ -164,15 +171,15 @@ def send_telegram_message(item_brand, item_title, item_price, item_url, item_ima
         response = requests.post(url, params=params, headers=headers, timeout=timeoutconnection)
 
         if response.status_code != 200:
-            logging.error(
+            logger.error(
                 f"Telegram notification failed. "
                 f"Status code: {response.status_code}, Response: {response.text}"
             )
         else:
-            logging.info("Telegram notification sent")
+            logger.info("Telegram notification sent")
 
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error sending Telegram message: {e}")
+        logger.error(f"Error sending Telegram message: {e}")
 
 def normalize(text):
     return unicodedata.normalize("NFKD", text).lower()
@@ -192,11 +199,11 @@ def is_excluded(item_title, item_description, item_brand, excluded_keywords_str)
 
 def main():
     # Load the list of previously analyzed items
-    logging.info("Loading the list of previously analyzed items")
+    logger.info("Loading the list of previously analyzed items")
     load_analyzed_item()
 
     # Initialize session and obtain session cookies from Vinted
-    logging.info("Initializing session and obtain session cookies from Vinted")
+    logger.info("Initializing session and obtain session cookies from Vinted")
     session = requests.Session()
     session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
     cookies = session.cookies.get_dict()
@@ -215,12 +222,12 @@ def main():
             response.raise_for_status()
             data = response.json()
         except (requests.exceptions.RequestException, ValueError) as e:
-            logging.error(f"Unable to fetch Vinted items: {e}")
+            logger.error(f"Unable to fetch Vinted items: {e}")
             continue
 
         items = data.get("items") if isinstance(data, dict) else None
         if not isinstance(items, list):
-            logging.error(
+            logger.error(
                 "Vinted response did not contain an items list "
                 f"(status={response.status_code}, keys={list(data) if isinstance(data, dict) else 'N/A'})"
             )
@@ -248,7 +255,7 @@ def main():
 
             # Skip items whose title or description match any excluded keyword
             if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
-                logging.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
                 continue
 
             # Check if the item has already been analyzed to prevent duplicates
