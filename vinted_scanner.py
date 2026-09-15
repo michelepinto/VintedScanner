@@ -202,112 +202,287 @@ def main():
     logger.info("Loading the list of previously analyzed items")
     load_analyzed_item()
 
-    # Initialize session and obtain session cookies from Vinted
+    # Initialize session with Vinted
     logger.info("Initializing session with Vinted")
 
-session = requests.Session()
-
-try:
-    session.get(
-        Config.vinted_url,
-        headers=headers,
-        timeout=timeoutconnection,
-    )
-except requests.exceptions.RequestException as e:
-    logger.error(f"Unable to initialize Vinted session: {e}")
-    return
-
-
-# Loop through each search query defined in Config.py
-for params in Config.queries:
-    
-    logger.info(f"Searching Vinted: {params}")
+    session = requests.Session()
 
     try:
-        response = session.get(
-            f"{Config.vinted_url}/svc-catalogue/items",
-            params=params,
+        session_response = session.get(
+            Config.vinted_url,
             headers=headers,
             timeout=timeoutconnection,
         )
 
-        logger.info(f"Vinted response: HTTP {response.status_code}")
+        logger.info(
+            f"Vinted homepage response: "
+            f"HTTP {session_response.status_code}"
+        )
 
-        response.raise_for_status()
-
-        data = response.json()
-
-    except requests.exceptions.HTTPError as e:
-        logger.error(f"Vinted HTTP error {response.status_code}: {e}")
-
-        if response.status_code == 403:
-            logger.error(
-                f"Vinted returned 403. Response headers: "
-                f"{dict(response.headers)}"
-            )
-        continue
+        logger.info(
+            f"Vinted session cookies: "
+            f"{list(session.cookies.keys())}"
+        )
 
     except requests.exceptions.RequestException as e:
-        logger.error(f"Unable to fetch Vinted items: {e}")
-        continue
-
-    except ValueError as e:
-        logger.error(f"Vinted returned invalid JSON: {e}")
-        continue
-
-    items = data.get("items") if isinstance(data, dict) else None
-
-    if not isinstance(items, list):
         logger.error(
-            "Vinted response did not contain an items list "
-            f"(status={response.status_code}, "
-            f"keys={list(data) if isinstance(data, dict) else 'N/A'})"
+            f"Unable to initialize Vinted session: {e}"
         )
-        continue
+        return
 
-        # Process each item returned in the response
-        for item in items:
-            item_id = str(item["id"])
-            item_brand = item.get("brand_title") or "N/A"
-            item_title = item["title"]
-            item_description = item.get("description") or ""
-            item_url = item["url"]
-            item_price_data = item.get("price") or {}
-            amount = item_price_data.get("amount")
-            item_amount = (
-                f"{float(amount):.2f}".replace(".", ",")
-                if amount is not None
-                else "N/D"
+    # Loop through each search query defined in Config.py
+    for params in Config.queries:
+
+        logger.info(
+            f"Searching Vinted: {params}"
+        )
+
+        try:
+            response = session.get(
+                f"{Config.vinted_url}/svc-catalogue/items",
+                params=params,
+                headers=headers,
+                timeout=timeoutconnection,
             )
-            item_currency = '€'
-            item_price = f"{item_amount} {item_currency}" if item_amount else "N/D"
 
-            item_photo = item.get("photo") or {}
-            item_image = item_photo.get("full_size_url")
+            logger.info(
+                f"Vinted response: "
+                f"HTTP {response.status_code}"
+            )
 
-            # Skip items whose title or description match any excluded keyword
-            if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
-                logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
+            response.raise_for_status()
+
+            data = response.json()
+
+        except requests.exceptions.HTTPError as e:
+
+            logger.error(
+                f"Vinted HTTP error "
+                f"{response.status_code}: {e}"
+            )
+
+            if response.status_code == 403:
+
+                logger.error(
+                    "========== VINTED 403 DEBUG =========="
+                )
+
+                logger.error(
+                    f"Request URL: {response.url}"
+                )
+
+                logger.error(
+                    f"Response headers: "
+                    f"{dict(response.headers)}"
+                )
+
+                logger.error(
+                    f"Response body: "
+                    f"{response.text[:2000]}"
+                )
+
+                logger.error(
+                    "Session cookies: "
+                    f"{list(session.cookies.keys())}"
+                )
+
+                logger.error(
+                    "======================================"
+                )
+
+            continue
+
+        except requests.exceptions.RequestException as e:
+
+            logger.error(
+                f"Unable to fetch Vinted items: {e}"
+            )
+
+            continue
+
+        except ValueError as e:
+
+            logger.error(
+                f"Vinted returned invalid JSON: {e}"
+            )
+
+            logger.error(
+                f"Response body: "
+                f"{response.text[:1000]}"
+            )
+
+            continue
+
+        # Extract items
+        items = (
+            data.get("items")
+            if isinstance(data, dict)
+            else None
+        )
+
+        if not isinstance(items, list):
+
+            logger.error(
+                "Vinted response did not contain "
+                "an items list. "
+                f"Status={response.status_code}, "
+                f"Keys="
+                f"{list(data) if isinstance(data, dict) else 'N/A'}"
+            )
+
+            continue
+
+        logger.info(
+            f"Vinted returned {len(items)} items"
+        )
+
+        # Process each item
+        for item in items:
+
+            try:
+
+                item_id = str(item["id"])
+
+                item_brand = (
+                    item.get("brand_title")
+                    or "N/A"
+                )
+
+                item_title = (
+                    item.get("title")
+                    or "N/A"
+                )
+
+                item_description = (
+                    item.get("description")
+                    or ""
+                )
+
+                item_url = (
+                    item.get("url")
+                    or ""
+                )
+
+                item_price_data = (
+                    item.get("price")
+                    or {}
+                )
+
+                amount = item_price_data.get(
+                    "amount"
+                )
+
+                if amount is not None:
+
+                    item_amount = (
+                        f"{float(amount):.2f}"
+                        .replace(".", ",")
+                    )
+
+                else:
+
+                    item_amount = "N/D"
+
+                item_currency = "€"
+
+                item_price = (
+                    f"{item_amount} "
+                    f"{item_currency}"
+                )
+
+                item_photo = (
+                    item.get("photo")
+                    or {}
+                )
+
+                item_image = (
+                    item_photo.get(
+                        "full_size_url"
+                    )
+                )
+
+            except (KeyError, TypeError, ValueError) as e:
+
+                logger.error(
+                    f"Unable to parse Vinted item: {e}"
+                )
+
                 continue
 
-            # Check if the item has already been analyzed to prevent duplicates
-            if item_id not in list_analyzed_items:
+            # Skip excluded items
+            if is_excluded(
+                item_title,
+                item_description,
+                item_brand,
+                Config.excluded_keywords,
+            ):
 
-                # Send e-mail notifications if configured
-                if Config.smtp_username and Config.smtp_server:
-                    send_email(item_brand, item_title, item_price, item_url, item_image)
+                logger.info(
+                    f"Skipping excluded item "
+                    f"[{item_id}]: "
+                    f"{item_title}"
+                )
 
-                # Send Slack notifications if configured
-                if Config.slack_webhook_url:
-                    send_slack_message(item_brand, item_title, item_price, item_url, item_image)
+                continue
 
-                # Send Telegram notifications if configured
-                if Config.telegram_bot_token and Config.telegram_chat_id:
-                    send_telegram_message(item_brand, item_title, item_price, item_url, item_image)
+            # Skip already analyzed items
+            if item_id in list_analyzed_items:
+                continue
 
-                # Mark item as analyzed and save it
-                list_analyzed_items.add(item_id)
-                save_analyzed_item(item_id)
+            logger.info(
+                f"New item found [{item_id}]: "
+                f"{item_brand} - "
+                f"{item_title} - "
+                f"{item_price}"
+            )
+
+            # Send e-mail notification
+            if (
+                Config.smtp_username
+                and Config.smtp_server
+            ):
+
+                send_email(
+                    item_brand,
+                    item_title,
+                    item_price,
+                    item_url,
+                    item_image,
+                )
+
+            # Send Slack notification
+            if Config.slack_webhook_url:
+
+                send_slack_message(
+                    item_brand,
+                    item_title,
+                    item_price,
+                    item_url,
+                    item_image,
+                )
+
+            # Send Telegram notification
+            if (
+                Config.telegram_bot_token
+                and Config.telegram_chat_id
+            ):
+
+                send_telegram_message(
+                    item_brand,
+                    item_title,
+                    item_price,
+                    item_url,
+                    item_image,
+                )
+
+            # Mark item as analyzed
+            list_analyzed_items.add(
+                item_id
+            )
+
+            save_analyzed_item(
+                item_id
+            )
 
 if __name__ == "__main__":
     main()
