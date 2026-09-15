@@ -12,7 +12,7 @@ telegram_bot_token = ""
 telegram_chat_id = ""
 
 # Vinted URL: change the TLD according to your country (.fr, .es, etc.)
-vinted_url = "https://www.vinted.it"
+vinted_url = "https://api.vinted.it"
 
 # Comma-separated list of strings to exclude from results (case-insensitive)
 excluded_keywords = ""
