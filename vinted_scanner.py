@@ -203,34 +203,67 @@ def main():
     load_analyzed_item()
 
     # Initialize session and obtain session cookies from Vinted
-    logger.info("Initializing session and obtain session cookies from Vinted")
-    session = requests.Session()
-    session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
-    cookies = session.cookies.get_dict()
+    logger.info("Initializing session with Vinted")
 
-    # Loop through each search query defined in Config.py
-    for params in Config.queries:
-        # Request items from the Vinted API based on the search parameters
-        try:
-            response = requests.get(
-                f"{Config.vinted_url}/svc-catalogue/items",
-                params=params,
-                cookies=cookies,
-                headers=headers,
-                timeout=timeoutconnection,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except (requests.exceptions.RequestException, ValueError) as e:
-            logger.error(f"Unable to fetch Vinted items: {e}")
+session = requests.Session()
 
-        items = data.get("items") if isinstance(data, dict) else None
-        if not isinstance(items, list):
+try:
+    session.get(
+        Config.vinted_url,
+        headers=headers,
+        timeout=timeoutconnection,
+    )
+except requests.exceptions.RequestException as e:
+    logger.error(f"Unable to initialize Vinted session: {e}")
+    return
+
+
+# Loop through each search query defined in Config.py
+for params in Config.queries:
+    
+    logger.info(f"Searching Vinted: {params}")
+
+    try:
+        response = session.get(
+            f"{Config.vinted_url}/svc-catalogue/items",
+            params=params,
+            headers=headers,
+            timeout=timeoutconnection,
+        )
+
+        logger.info(f"Vinted response: HTTP {response.status_code}")
+
+        response.raise_for_status()
+
+        data = response.json()
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"Vinted HTTP error {response.status_code}: {e}")
+
+        if response.status_code == 403:
             logger.error(
-                "Vinted response did not contain an items list "
-                f"(status={response.status_code}, keys={list(data) if isinstance(data, dict) else 'N/A'})"
+                f"Vinted returned 403. Response headers: "
+                f"{dict(response.headers)}"
             )
-            continue
+        continue
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Unable to fetch Vinted items: {e}")
+        continue
+
+    except ValueError as e:
+        logger.error(f"Vinted returned invalid JSON: {e}")
+        continue
+
+    items = data.get("items") if isinstance(data, dict) else None
+
+    if not isinstance(items, list):
+        logger.error(
+            "Vinted response did not contain an items list "
+            f"(status={response.status_code}, "
+            f"keys={list(data) if isinstance(data, dict) else 'N/A'})"
+        )
+        continue
 
         # Process each item returned in the response
         for item in items:
