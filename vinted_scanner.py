@@ -224,6 +224,8 @@ def main():
 
             logger.info(f"Vinted URL triggered: {prepared_request.url}")
 
+            logger.info("Vinted URL triggered5: %s", prepared_request.url.encode("utf-8"))
+
             logger.info("Config file: %s", Config.__file__)
             logger.info("All queries: %r", Config.queries)
 
