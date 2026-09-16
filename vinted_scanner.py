@@ -222,13 +222,9 @@ def main():
                 params=params
             ).prepare()
 
-            logger.info(f"Vinted URL triggered1: {prepared_request.url}")
+            logger.info(f"Vinted URL triggered: {prepared_request.url}")
 
-            from urllib.parse import unquote
-            logger.info(f"Vinted URL triggered2: {email.utils.unquote(prepared_request.url)}")
-
-            logger.info("Vinted URL triggered3: %s", prepared_request.url)
-            logger.info("Vinted URL repr4: %r", prepared_request.url)
+            logger.info("PARAMS: %r", params)
 
             response = requests.get(
                 url,
