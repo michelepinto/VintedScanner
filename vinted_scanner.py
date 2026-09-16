@@ -213,7 +213,7 @@ def main():
         # Request items from the Vinted API based on the search parameters
         try:
             response = requests.get(
-                f"{Config.vinted_url}/api/v2/catalog/items",
+                f"{Config.vinted_api_url}/svc-catalogue/items",
                 params=params,
                 cookies=cookies,
                 headers=headers,
