@@ -224,19 +224,6 @@ def main():
 
             logger.info(f"Vinted URL triggered: {prepared_request.url}")
 
-            from urllib.parse import unquote
-            prepared_request = requests.Request(
-                "GET",
-                url,
-                params=params
-            ).prepare()
-
-            log_url = unquote(prepared_request.url)
-
-            logger.info("Vinted Prepared2 URL triggered: %s", log_url)
-
-
-
             response = requests.get(
                 url,
                 params=params,
@@ -265,6 +252,7 @@ def main():
             item_title = item["title"]
             item_description = item.get("description") or ""
             item_url = vinted_url + item["url"]
+
             item_price_data = item.get("price") or {}
             amount = item_price_data.get("amount")
             item_amount = (
@@ -272,8 +260,17 @@ def main():
                 if amount is not None
                 else "N/D"
             )
+
+            item_total_price_data = item.get("total_item_price") or {}
+            total_amount = item_total_price_data.get("amount")
+            item_total_amount = (
+                f"{float(total_amount):.2f}".replace(".", ",")
+                if total_amount is not None
+                else "N/D"
+            )
+
             item_currency = '€'
-            item_price = f"{item_amount} {item_currency}" if item_amount else "N/D"
+            item_price = f"{item_amount} {item_currency} ({item_total_amount} {item_currency} with the service fee)" if item_amount & item_total_amount % else "N/D"
 
             item_photo = item.get("photo") or {}
             item_image = item_photo.get("full_size_url")
