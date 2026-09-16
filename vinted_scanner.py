@@ -224,7 +224,8 @@ def main():
 
             logger.info(f"Vinted URL triggered: {prepared_request.url}")
 
-            logger.info("PARAMS: %r", params)
+            logger.info("Config file: %s", Config.__file__)
+            logger.info("All queries: %r", Config.queries)
 
             response = requests.get(
                 url,
