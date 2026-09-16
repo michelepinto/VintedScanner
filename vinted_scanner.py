@@ -224,22 +224,14 @@ def main():
 
             logger.info(f"Vinted URL triggered: {prepared_request.url}")
 
-            logger.info("Vinted URL triggered5: %s", prepared_request.url.encode("utf-8"))
+            key = list(Config.queries[0].keys())[3]
 
-            logger.info("Config file: %s", Config.__file__)
-            logger.info("All queries: %r", Config.queries)
+            print("KEY:", key)
+            print("REPR:", repr(key))
+            print("LENGTH:", len(key))
 
-            print("=== RAW KEY TEST ===")
-
-            for i, query in enumerate(Config.queries):
-                for key in query.keys():
-                    if "catalog" in key:
-                        print("QUERY:", i)
-                        print("KEY:", key)
-                        print("REPR:", repr(key))
-                        print("ORDS:", [ord(c) for c in key])
-                        print("ENDS WITH ]:", key.endswith("]"))
-                        print()
+            for i, c in enumerate(key):
+                print(i, repr(c), ord(c))
 
             response = requests.get(
                 url,
