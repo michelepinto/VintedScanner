@@ -11,7 +11,7 @@ slack_webhook_url = ""
 telegram_bot_token = ""
 telegram_chat_id = ""
 
-# Vinted URL: change the TLD according to your country (.fr, .es, etc.)
+# Vinted URLs: change the TLD according to your country (.fr, .es, etc.)
 vinted_url = "https://www.vinted.it"
 vinted_api_url = "https://api.vinted.it"
 
