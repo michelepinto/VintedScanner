@@ -212,13 +212,24 @@ def main():
     for params in Config.queries:
         # Request items from the Vinted API based on the search parameters
         try:
+            url = f"{Config.vinted_api_url}/svc-catalogue/items"
+
+            prepared_request = requests.Request(
+                "GET",
+                url,
+                params=params
+            ).prepare()
+
+            logger.info(f"Vinted URL triggered: {prepared_request.url}")
+
             response = requests.get(
-                f"{Config.vinted_api_url}/svc-catalogue/items",
+                url,
                 params=params,
                 cookies=cookies,
                 headers=headers,
                 timeout=timeoutconnection,
             )
+
             response.raise_for_status()
             data = response.json()
         except (requests.exceptions.RequestException, ValueError) as e:
