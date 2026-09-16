@@ -227,6 +227,18 @@ def main():
             logger.info("Config file: %s", Config.__file__)
             logger.info("All queries: %r", Config.queries)
 
+            print("=== RAW KEY TEST ===")
+
+            for i, query in enumerate(Config.queries):
+                for key in query.keys():
+                    if "catalog" in key:
+                        print("QUERY:", i)
+                        print("KEY:", key)
+                        print("REPR:", repr(key))
+                        print("ORDS:", [ord(c) for c in key])
+                        print("ENDS WITH ]:", key.endswith("]"))
+                        print()
+
             response = requests.get(
                 url,
                 params=params,
