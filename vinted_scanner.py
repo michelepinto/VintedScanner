@@ -224,8 +224,18 @@ def main():
 
             logger.info(f"Vinted URL triggered: {prepared_request.url}")
 
-            log_url = prepared_request.url.replace("%5D", "<CLOSE>")
-            print("Vinted Prepared URL triggered: %s", log_url)
+            from urllib.parse import unquote
+            prepared_request = requests.Request(
+                "GET",
+                url,
+                params=params
+            ).prepare()
+
+            log_url = unquote(prepared_request.url)
+
+            logger.info("Vinted Prepared2 URL triggered: %s", log_url)
+
+
 
             response = requests.get(
                 url,
