@@ -198,6 +198,8 @@ def is_excluded(item_title, item_description, item_brand, excluded_keywords_str)
     return any(kw in text for kw in keywords)
 
 def main():
+    vinted_url = Config.vinted_url
+
     # Load the list of previously analyzed items
     logger.info("Loading the list of previously analyzed items")
     load_analyzed_item()
@@ -205,7 +207,7 @@ def main():
     # Initialize session and obtain session cookies from Vinted
     logger.info("Initializing session and obtain session cookies from Vinted")
     session = requests.Session()
-    session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
+    session.post(vinted_url, headers=headers, timeout=timeoutconnection)
     cookies = session.cookies.get_dict()
 
     # Loop through each search query defined in Config.py
@@ -249,7 +251,7 @@ def main():
             item_brand = item.get("brand_title") or "N/A"
             item_title = item["title"]
             item_description = item.get("description") or ""
-            item_url = item["url"]
+            item_url = vinted_url + item["url"]
             item_price_data = item.get("price") or {}
             amount = item_price_data.get("amount")
             item_amount = (
