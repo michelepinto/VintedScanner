@@ -260,7 +260,6 @@ def main():
                 if amount is not None
                 else "N/D"
             )
-
             item_total_price_data = item.get("total_item_price") or {}
             total_amount = item_total_price_data.get("amount")
             item_total_amount = (
@@ -268,9 +267,13 @@ def main():
                 if total_amount is not None
                 else "N/D"
             )
-
             item_currency = '€'
-            item_price = f"{item_amount} {item_currency} ({item_total_amount} {item_currency} with the service fee)" if item_amount & item_total_amount % else "N/D"
+            item_price = (
+                f"{item_amount} {item_currency} "
+                f"({item_total_amount} {item_currency} with the service fee)"
+                if item_amount != "N/D" and item_total_amount != "N/D"
+                else "N/D"
+            )
 
             item_photo = item.get("photo") or {}
             item_image = item_photo.get("full_size_url")
