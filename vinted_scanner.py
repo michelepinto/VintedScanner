@@ -270,7 +270,7 @@ def main():
             item_currency = '€'
             item_price = (
                 f"{item_amount} {item_currency} "
-                f"({item_total_amount} {item_currency} with the service fee)"
+                f"({item_total_amount} {item_currency} Includes Buyer Protection)"
                 if item_amount != "N/D" and item_total_amount != "N/D"
                 else "N/D"
             )
