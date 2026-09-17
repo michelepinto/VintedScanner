@@ -201,6 +201,24 @@ def is_excluded(item_title, item_description, excluded_keywords_str):
     return any(kw in text for kw in keywords)
 
 def main():
+
+    import requests
+
+    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    s = requests.Session()
+    s.headers.update({"User-Agent": UA, "Accept-Language": "it-IT,it;q=0.9"})
+
+    r = s.get("https://www.vinted.it/catalog", timeout=20)
+    print("cookie fetch:", r.status_code, r.headers.get("cf-ray"), r.headers.get("cf-mitigated"))
+    print("cookies:", list(s.cookies.get_dict()))
+
+    r2 = s.get("https://www.vinted.it/api/v2/catalog/items",
+            params={"page": 1, "per_page": 96, "search_text": "anni 90"},
+            headers={"Accept": "application/json"}, timeout=20)
+    print("api:", r2.status_code, r2.text[:400])
+
+
+
     vinted_url = Config.vinted_url
 
     # Load the list of previously analyzed items
