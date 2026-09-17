@@ -175,7 +175,7 @@ def send_telegram_message(item_title, item_price, item_url, item_image):
                 f"Status code: {response.status_code}, Response: {response.text}"
             )
         else:
-            logger.info("Telegram notification sent")
+            logger.info("Telegram notification sent: %s", item_url)
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Error sending Telegram message: {e}")
