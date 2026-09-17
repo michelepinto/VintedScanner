@@ -222,7 +222,8 @@ def main():
                 params=params
             ).prepare()
 
-            logger.info(f"Vinted URL triggered: {prepared_request.url.replace('catalog***', 'catalog]')}")
+            logger.info("Vinted URL triggered1: %s", prepared_request.url)
+            logger.info("Vinted URL triggered2: %r", prepared_request.url)
 
             response = requests.get(
                 url,
