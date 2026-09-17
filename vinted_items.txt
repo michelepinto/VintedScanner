@@ -24383,3 +24383,5 @@
 9999094274
 9999365517
 9999981712
+ciao
+https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=anni+90&attribute_ids%5Bcatalog%5D=3327&attribute_ids%5Bbrand%5D=9081&order=newest_first
