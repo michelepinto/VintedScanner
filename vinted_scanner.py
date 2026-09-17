@@ -78,16 +78,6 @@ def save_analyzed_item(hash):
         logger.error(e, exc_info=True)
         sys.exit()
 
-# Save a new analyzed item to prevent repeated alerts
-def save_log(log):
-    try:
-        with open("log.txt", "a") as f:
-            f.write(str(log) + "\n")
-    except IOError as e:
-        logger.error(e, exc_info=True)
-        sys.exit()
-
-
 # Send notification e-mail when a new item is found
 def send_email(item_title, item_price, item_url, item_image):
     try:
@@ -246,11 +236,6 @@ def main():
                 headers=headers,
                 timeout=timeoutconnection,
             )
-
-            print("Status code: %s", response.status_code)
-            print("Response: %s", response.text[:5000])
-            print("Response URL: %s", response.url)
-            save_analyzed_item(response.request.headers)
             
             response.raise_for_status()
             data = response.json()
