@@ -246,6 +246,8 @@ def main():
 
         logger.info("DATA_RESPONSE_KEYS: %s", data.keys())
 
+        logger.info("RESPONSE HEADERS: %s", response.headers)
+
         logger.info("Vinted API has returned: %s items", len(items))
 
         # Process each item returned in the response
