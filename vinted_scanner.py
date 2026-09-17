@@ -244,6 +244,8 @@ def main():
             )
             continue
 
+        logger.info("DATA_RESPONSE: %s", data)
+
         logger.info("Vinted API has returned: %s items", len(items))
 
         # Process each item returned in the response
