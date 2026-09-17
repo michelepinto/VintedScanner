@@ -222,8 +222,9 @@ def main():
                 params=params
             ).prepare()
 
-            logger.info("Vinted URL triggered1: %s", prepared_request.url)
-            logger.info("Vinted URL triggered2: %r", prepared_request.url)
+            print("PARAMS:", repr(params))
+
+            logger.info("Vinted URL triggered: %s", prepared_request.url)
 
             response = requests.get(
                 url,
