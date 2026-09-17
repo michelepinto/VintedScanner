@@ -244,7 +244,7 @@ def main():
             )
             continue
 
-        logger.info("DATA_RESPONSE_KEYS: %s", data.keys)
+        logger.info("DATA_RESPONSE_KEYS: %s", data.keys())
 
         logger.info("Vinted API has returned: %s items", len(items))
 
