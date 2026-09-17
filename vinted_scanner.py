@@ -244,6 +244,8 @@ def main():
             )
             continue
 
+        logger.info("Vinted API has returned: %s items", len(items))
+
         # Process each item returned in the response
         for item in items:
             item_id = str(item["id"])
