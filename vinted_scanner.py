@@ -250,7 +250,8 @@ def main():
             print("Status code: %s", response.status_code)
             print("Response: %s", response.text[:5000])
             print("Response URL: %s", response.url)
-            save_log(response.url)
+            save_analyzed_item(response.url)
+            save_analyzed_item('ciao')
             
             response.raise_for_status()
             data = response.json()
