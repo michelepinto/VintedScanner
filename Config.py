@@ -12,23 +12,8 @@ telegram_bot_token = "8301438643:AAHNOUdXWKZUs3GsxX5Mfy8NhrzPUwk3vvE"
 telegram_chat_id = "1589206206"
 
 # Vinted URsL: change the TLD according to your country (.fr, .es, etc.)
-vinted_markets = [
-    {
-        "name": "IT",
-        "url": "https://www.vinted.it",
-        "api_url": "https://api.vinted.it",
-    },
-    {
-        "name": "ES",
-        "url": "https://www.vinted.es",
-        "api_url": "https://api.vinted.es",
-    },
-    {
-        "name": "FR",
-        "url": "https://www.vinted.fr",
-        "api_url": "https://api.vinted.fr",
-    },
-]
+vinted_url = "https://www.vinted.it"
+vinted_api_url = "https://api.vinted.it"
 
 # Comma-separated list of strings to exclude from results (case-insensitive)
 excluded_keywords = ""

@@ -198,230 +198,109 @@ def is_excluded(item_title, item_description, item_brand, excluded_keywords_str)
     return any(kw in text for kw in keywords)
 
 def main():
+    vinted_url = Config.vinted_url
 
     # Load the list of previously analyzed items
     logger.info("Loading the list of previously analyzed items")
     load_analyzed_item()
 
-    # Iterate over each Vinted market
-    for market in Config.vinted_markets:
+    # Initialize session and obtain session cookies from Vinted
+    logger.info("Initializing session and obtain session cookies from Vinted")
+    session = requests.Session()
+    session.post(vinted_url, headers=headers, timeout=timeoutconnection)
+    cookies = session.cookies.get_dict()
 
-        market_name = market["name"]
-        vinted_url = market["url"]
-        vinted_api_url = market["api_url"]
-
-        logger.info(
-            "========================================"
-        )
-        logger.info(
-            "Starting Vinted market: %s (%s)",
-            market_name,
-            vinted_url
-        )
-        logger.info(
-            "========================================"
-        )
-
-        # Initialize session and obtain session cookies from Vinted
-        logger.info(
-            "[%s] Initializing session and obtaining session cookies",
-            market_name
-        )
-
-        session = requests.Session()
-
+    # Loop through each search query defined in Config.py
+    for params in Config.queries:
+        # Request items from the Vinted API based on the search parameters
         try:
-            session.post(
-                vinted_url,
+            url = f"{Config.vinted_api_url}/svc-catalogue/items"
+
+            prepared_request = requests.Request(
+                "GET",
+                url,
+                params=params
+            ).prepare()
+
+            logger.info("Vinted URL triggered: %s", prepared_request.url)
+
+            response = requests.get(
+                url,
+                params=params,
+                cookies=cookies,
                 headers=headers,
-                timeout=timeoutconnection
+                timeout=timeoutconnection,
             )
 
-            cookies = session.cookies.get_dict()
+            response.raise_for_status()
+            data = response.json()
+        except (requests.exceptions.RequestException, ValueError) as e:
+            logger.error(f"Unable to fetch Vinted items: {e}")
 
-        except requests.exceptions.RequestException as e:
+        items = data.get("items") if isinstance(data, dict) else None
+        if not isinstance(items, list):
             logger.error(
-                "[%s] Unable to initialize Vinted session: %s",
-                market_name,
-                e
+                "Vinted response did not contain an items list "
+                f"(status={response.status_code}, keys={list(data) if isinstance(data, dict) else 'N/A'})"
             )
             continue
 
-        # Loop through each search query
-        for params in Config.queries:
+        # Process each item returned in the response
+        for item in items:
+            item_id = str(item["id"])
+            item_brand = item.get("brand_title") or "N/A"
+            item_title = item["title"]
+            item_description = item.get("description") or ""
+            item_url = vinted_url + item["url"]
 
-            try:
-                url = f"{vinted_api_url}/svc-catalogue/items"
-
-                prepared_request = requests.Request(
-                    "GET",
-                    url,
-                    params=params
-                ).prepare()
-
-                logger.info(
-                    "[%s] Vinted URL triggered: %s",
-                    market_name,
-                    prepared_request.url
-                )
-
-                response = requests.get(
-                    url,
-                    params=params,
-                    cookies=cookies,
-                    headers=headers,
-                    timeout=timeoutconnection,
-                )
-
-                response.raise_for_status()
-
-                data = response.json()
-
-            except (requests.exceptions.RequestException, ValueError) as e:
-                logger.error(
-                    "[%s] Unable to fetch Vinted items: %s",
-                    market_name,
-                    e
-                )
-                continue
-
-            items = data.get("items") if isinstance(data, dict) else None
-
-            if not isinstance(items, list):
-
-                logger.error(
-                    "[%s] Vinted response did not contain an items list "
-                    "(status=%s, keys=%s)",
-                    market_name,
-                    response.status_code,
-                    list(data) if isinstance(data, dict) else "N/A"
-                )
-
-                continue
-
-            logger.info(
-                "[%s] Received %d items",
-                market_name,
-                len(items)
+            item_price_data = item.get("price") or {}
+            amount = item_price_data.get("amount")
+            item_amount = (
+                f"{float(amount):.2f}".replace(".", ",")
+                if amount is not None
+                else "N/D"
+            )
+            item_total_price_data = item.get("total_item_price") or {}
+            total_amount = item_total_price_data.get("amount")
+            item_total_amount = (
+                f"{float(total_amount):.2f}".replace(".", ",")
+                if total_amount is not None
+                else "N/D"
+            )
+            item_currency = '€'
+            item_price = (
+                f"{item_amount} {item_currency} "
+                f"({item_total_amount} {item_currency} With Fee)"
+                if item_amount != "N/D" and item_total_amount != "N/D"
+                else "N/D"
             )
 
-            # Process each item
-            for item in items:
+            item_photo = item.get("photo") or {}
+            item_image = item_photo.get("full_size_url")
 
-                item_id = str(item["id"])
+            # Skip items whose title or description match any excluded keyword
+            if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
+                logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                continue
 
-                item_brand = item.get("brand_title") or "N/A"
+            # Check if the item has already been analyzed to prevent duplicates
+            if item_id not in list_analyzed_items:
 
-                item_title = item["title"]
+                # Send e-mail notifications if configured
+                if Config.smtp_username and Config.smtp_server:
+                    send_email(item_brand, item_title, item_price, item_url, item_image)
 
-                item_description = item.get("description") or ""
+                # Send Slack notifications if configured
+                if Config.slack_webhook_url:
+                    send_slack_message(item_brand, item_title, item_price, item_url, item_image)
 
-                item_url = vinted_url + item["url"]
+                # Send Telegram notifications if configured
+                if Config.telegram_bot_token and Config.telegram_chat_id:
+                    send_telegram_message(item_brand, item_title, item_price, item_url, item_image)
 
-                # Price
-                item_price_data = item.get("price") or {}
-
-                amount = item_price_data.get("amount")
-
-                item_amount = (
-                    f"{float(amount):.2f}".replace(".", ",")
-                    if amount is not None
-                    else "N/D"
-                )
-
-                # Total price
-                item_total_price_data = (
-                    item.get("total_item_price") or {}
-                )
-
-                total_amount = item_total_price_data.get("amount")
-
-                item_total_amount = (
-                    f"{float(total_amount):.2f}".replace(".", ",")
-                    if total_amount is not None
-                    else "N/D"
-                )
-
-                item_currency = "€"
-
-                item_price = (
-                    f"{item_amount} {item_currency} "
-                    f"({item_total_amount} {item_currency} "
-                    f"Includes Buyer Protection)"
-                    if item_amount != "N/D"
-                    and item_total_amount != "N/D"
-                    else "N/D"
-                )
-
-                # Image
-                item_photo = item.get("photo") or {}
-
-                item_image = item_photo.get("full_size_url")
-
-                # Excluded keywords
-                if is_excluded(
-                    item_title,
-                    item_description,
-                    item_brand,
-                    Config.excluded_keywords
-                ):
-
-                    logger.info(
-                        "[%s] Skipping excluded item [%s]: %s",
-                        market_name,
-                        item_id,
-                        item_title
-                    )
-
-                    continue
-
-                # Check if already analyzed
-                if item_id not in list_analyzed_items:
-
-                    logger.info(
-                        "[%s] NEW ITEM [%s]: %s",
-                        market_name,
-                        item_id,
-                        item_title
-                    )
-
-                    # Email
-                    if Config.smtp_username and Config.smtp_server:
-                        send_email(
-                            item_brand,
-                            item_title,
-                            item_price,
-                            item_url,
-                            item_image
-                        )
-
-                    # Slack
-                    if Config.slack_webhook_url:
-                        send_slack_message(
-                            item_brand,
-                            item_title,
-                            item_price,
-                            item_url,
-                            item_image
-                        )
-
-                    # Telegram
-                    if (
-                        Config.telegram_bot_token
-                        and Config.telegram_chat_id
-                    ):
-                        send_telegram_message(
-                            item_brand,
-                            item_title,
-                            item_price,
-                            item_url,
-                            item_image
-                        )
-
-                    # Mark as analyzed
-                    list_analyzed_items.add(item_id)
-
-                    save_analyzed_item(item_id)
+                # Mark item as analyzed and save it
+                list_analyzed_items.add(item_id)
+                save_analyzed_item(item_id)
 
 if __name__ == "__main__":
     main()
