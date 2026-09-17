@@ -224,8 +224,6 @@ def main():
 
             logger.info("Vinted URL triggered: %s", prepared_request.url)
 
-            logger.info("Vinted URL triggered2: %s", prepared_request.url.replace("%5D", "%255D"))
-
             response = requests.get(
                 url,
                 params=params,
