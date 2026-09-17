@@ -74,7 +74,7 @@ def save_analyzed_item(hash):
         sys.exit()
 
 # Send notification e-mail when a new item is found
-def send_email(item_brand, item_title, item_price, item_url, item_image):
+def send_email(item_title, item_price, item_url, item_image):
     try:
         # Create the e-mail message
         msg = EmailMessage()
@@ -85,7 +85,7 @@ def send_email(item_brand, item_title, item_price, item_url, item_image):
         msg["Message-ID"] = email.utils.make_msgid()
 
         # Format message content
-        body_lines = [item_brand, item_title, str(item_price), f"🔗 {item_url}"]
+        body_lines = [item_title, str(item_price), f"🔗 {item_url}"]
         if item_image:
             body_lines.append(f"📷 {item_image}")
         body = "\n".join(body_lines)
@@ -112,11 +112,11 @@ def send_email(item_brand, item_title, item_price, item_url, item_image):
 
 
 # Send a Slack message when a new item is found
-def send_slack_message(item_brand, item_title, item_price, item_url, item_image):
+def send_slack_message(item_title, item_price, item_url, item_image):
     webhook_url = Config.slack_webhook_url 
 
     # Format message content
-    message_lines = [f"*🏷️ {item_brand}*", f"*🆕 {item_title}*", f"💰 {item_price}", f"🔗 {item_url}"]
+    message_lines = [f"*🆕 {item_title}*", f"💰 {item_price}", f"🔗 {item_url}"]
     if item_image:
         message_lines.append(f"📷 {item_image}")
     message = "\n".join(message_lines)
@@ -139,15 +139,14 @@ def send_slack_message(item_brand, item_title, item_price, item_url, item_image)
         logger.error(f"Error sending Slack message: {e}")
 
 # Send a Telegram message when a new item is found
-def send_telegram_message(item_brand, item_title, item_price, item_url, item_image):
+def send_telegram_message(item_title, item_price, item_url, item_image):
     from html import escape
 
-    safe_brand = escape(str(item_brand))
     safe_title = escape(str(item_title))
     safe_url = escape(str(item_url), quote=True)
     
     caption = "\n".join([
-        f'🔗 <a href="{safe_url}"><b>{safe_brand}</b> – {safe_title}</a>',
+        f'🔗 <a href="{safe_url}">{safe_title}</a>',
         f"💰 {item_price}",
     ])
 
@@ -184,7 +183,7 @@ def send_telegram_message(item_brand, item_title, item_price, item_url, item_ima
 def normalize(text):
     return unicodedata.normalize("NFKD", text).lower()
 
-def is_excluded(item_title, item_description, item_brand, excluded_keywords_str):
+def is_excluded(item_title, item_description, excluded_keywords_str):
     if not excluded_keywords_str:
         return False
 
@@ -193,7 +192,7 @@ def is_excluded(item_title, item_description, item_brand, excluded_keywords_str)
         for kw in excluded_keywords_str.split(",")
         if kw.strip()
     ]
-    text = normalize(f"{item_title} {item_description} {item_brand}")
+    text = normalize(f"{item_title} {item_description}")
 
     return any(kw in text for kw in keywords)
 
@@ -248,7 +247,6 @@ def main():
         # Process each item returned in the response
         for item in items:
             item_id = str(item["id"])
-            item_brand = item.get("brand_title") or "N/A"
             item_title = item["title"]
             item_description = item.get("description") or ""
             item_url = vinted_url + item["url"]
@@ -279,7 +277,7 @@ def main():
             item_image = item_photo.get("full_size_url")
 
             # Skip items whose title or description match any excluded keyword
-            if is_excluded(item_title, item_description, item_brand, Config.excluded_keywords):
+            if is_excluded(item_title, item_description, Config.excluded_keywords):
                 logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
                 continue
 
@@ -288,15 +286,15 @@ def main():
 
                 # Send e-mail notifications if configured
                 if Config.smtp_username and Config.smtp_server:
-                    send_email(item_brand, item_title, item_price, item_url, item_image)
+                    send_email(item_title, item_price, item_url, item_image)
 
                 # Send Slack notifications if configured
                 if Config.slack_webhook_url:
-                    send_slack_message(item_brand, item_title, item_price, item_url, item_image)
+                    send_slack_message(item_title, item_price, item_url, item_image)
 
                 # Send Telegram notifications if configured
                 if Config.telegram_bot_token and Config.telegram_chat_id:
-                    send_telegram_message(item_brand, item_title, item_price, item_url, item_image)
+                    send_telegram_message(item_title, item_price, item_url, item_image)
 
                 # Mark item as analyzed and save it
                 list_analyzed_items.add(item_id)
