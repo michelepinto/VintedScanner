@@ -5,3 +5,9 @@
 2026-09-18 07:18:37.553 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=trulli | returned: 96 items
 2026-09-18 07:18:37.763 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=trullo | returned: 44 items
 2026-09-18 07:19:40.061 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=trull | returned: 96 items
+2026-09-18 07:24:05.990 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=vittuone | returned: 0 items
+2026-09-18 07:24:06.146 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=capasone | returned: 0 items
+2026-09-18 07:24:06.389 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=capa | returned: 96 items
+2026-09-18 07:24:06.599 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=trulli | returned: 96 items
+2026-09-18 07:24:06.790 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=trullo | returned: 44 items
+2026-09-18 07:24:07.027 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=trull | returned: 96 items
