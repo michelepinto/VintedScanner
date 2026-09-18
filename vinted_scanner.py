@@ -267,8 +267,10 @@ def main():
 
         logger.info("Vinted API has returned: %s items", len(items))
 
-        save_log("Vinted API request: %s" % response.request.url)
-        save_log("Vinted API has returned: %s" % len(items))
+        save_log(
+            "Vinted API request: %s | returned: %s items"
+            % (response.request.url, len(items))
+        )
 
         # Process each item returned in the response
         for item in items:
