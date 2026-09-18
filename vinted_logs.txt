@@ -3,3 +3,6 @@
 2026-09-18 06:37:05 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=7800&order=newest_first | returned: 96 items
 2026-09-18 06:37:05 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=fantozzi&attribute_ids%5Bcatalog%5D=4904&order=newest_first | returned: 0 items
 2026-09-18 06:37:40 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=anni+90&attribute_ids%5Bcatalog%5D=3327&attribute_ids%5Bbrand%5D=9081&order=newest_first | returned: 0 items
+2026-09-18 06:39:21 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=&attribute_ids%5Bcatalog%5D=1195&attribute_ids%5Bbrand%5D=88%2C+275446%2C+341007&attribute_ids%5Bsize%5D=630%2C+631&order=newest_first | returned: 96 items
+2026-09-18 06:39:21 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=&attribute_ids%5Bcatalog%5D=1904&attribute_ids%5Bbrand%5D=88&attribute_ids%5Bsize%5D=1391%2C+1578&order=newest_first | returned: 61 items
+2026-09-18 06:39:34 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=anni+90&attribute_ids%5Bcatalog%5D=3327&attribute_ids%5Bbrand%5D=9081&order=newest_first | returned: 0 items
