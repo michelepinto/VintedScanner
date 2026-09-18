@@ -262,7 +262,7 @@ def main():
             )
             continue
 
-        # logger.info("Vinted API has returned: %s items", len(items))
+        logger.info("Vinted API has returned: %s items", len(items))
 
         save_log(
             "Vinted API request: %s | returned: %s items"
