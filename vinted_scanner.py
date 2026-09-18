@@ -309,10 +309,6 @@ def main():
             # Check if the item has already been analyzed to prevent duplicates
             if item_id not in list_analyzed_items:
 
-                print(f"item_id not in list_analyzed_items: {item_id}")
-
-                print(f"Number of analyzed items: {len(list_analyzed_items)}")
-
                 # Send e-mail notifications if configured
                 if Config.smtp_username and Config.smtp_server:
                     send_email(item_title, item_price, item_url, item_image)
