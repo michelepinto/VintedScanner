@@ -70,7 +70,7 @@ jobs:
           git fetch origin master
           git checkout origin/master -- vinted_logs.txt || touch vinted_logs.txt
       
-          cat vinted_logs.txt /tmp/vvinted_logs_new.txt | sort -u > vinted_logs_merged.txt
+          cat vinted_logs.txt /tmp/vinted_logs_new.txt | sort -u > vinted_logs_merged.txt
           mv vinted_logs_merged.txt vinted_logs.txt
       
           git add vinted_logs.txt
