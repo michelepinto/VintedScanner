@@ -63,6 +63,9 @@ def load_analyzed_item():
                 item_id = line.strip()
                 if item_id:
                     list_analyzed_items.add(item_id)
+
+        print(f"Number of analyzed items: {len(list_analyzed_items)}")
+
     except FileNotFoundError:
         logger.info("No previous vinted_items.txt found, starting fresh")
     except IOError as e:
