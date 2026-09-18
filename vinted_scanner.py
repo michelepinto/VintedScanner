@@ -262,11 +262,7 @@ def main():
             )
             continue
 
-        logger.info("DATA_RESPONSE_KEYS: %s", data.keys())
-
-        logger.info("RESPONSE HEADERS: %s", response.headers)
-
-        logger.info("Vinted API has returned: %s items", len(items))
+        # logger.info("Vinted API has returned: %s items", len(items))
 
         save_log(
             "Vinted API request: %s | returned: %s items"
