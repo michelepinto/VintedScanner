@@ -1,13 +1,1 @@
 
-2026-09-18 06:45:00 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=7800&attribute_ids%5Bcatalog%5D=3002&attribute_ids%5Bvideo_game_platform%5D=1260&order=newest_first | returned: 96 items
-2026-09-18 06:45:00 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=arluno&attribute_ids%5Bcatalog%5D=1918%2C+2994%2C+2309%2C+4824&order=newest_first | returned: 0 items
-2026-09-18 06:45:00 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=fantozzi&attribute_ids%5Bcatalog%5D=4904&order=newest_first | returned: 0 items
-2026-09-18 06:45:00 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=trulli&attribute_ids%5Bcatalog%5D=3822%2C+2320%2C+1934%2C+5199%2C+3846&order=newest_first | returned: 8 items
-2026-09-18 06:45:00 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=vittuone&attribute_ids%5Bcatalog%5D=1918%2C+2994%2C+2309%2C+4824&order=newest_first | returned: 0 items
-2026-09-18 06:45:01 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&attribute_ids%5Bcatalog%5D=5252+&attribute_ids%5Bbrand%5D=1900587%2C+2765853%2C+12010723%2C+24011%2C+15896345&attribute_ids%5Bstatus%5D=6%2C+1%2C+3&order=newest_first | returned: 0 items
-2026-09-18 06:45:01 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=alberobello&attribute_ids%5Bcatalog%5D=1918%2C+2309%2C+4824&order=newest_first | returned: 7 items
-2026-09-18 06:45:01 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=capasone&attribute_ids%5Bcatalog%5D=1940%2C+3857%2C+5357+&order=newest_first | returned: 0 items
-2026-09-18 06:45:01 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=ceramica+grottaglie&attribute_ids%5Bcatalog%5D=1934%2C+1920%2C+2924%2C+5357+&order=newest_first | returned: 1 items
-2026-09-18 06:45:01 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=corbetta&attribute_ids%5Bcatalog%5D=1918%2C+2994%2C+2309%2C+4824&order=newest_first | returned: 5 items
-2026-09-18 06:45:01 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=sedriano&attribute_ids%5Bcatalog%5D=1918%2C+2994%2C+2309%2C+4824&order=newest_first | returned: 0 items
-2026-09-18 06:45:02 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&attribute_ids%5Bcatalog%5D=3507+&attribute_ids%5Bbrand%5D=726317&attribute_ids%5Bstatus%5D=6%2C+1%2C+3&order=newest_first | returned: 1 items
