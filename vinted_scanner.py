@@ -79,10 +79,12 @@ def save_analyzed_item(hash):
         sys.exit()
 
 # Save logs
+from datetime import datetime
 def save_log(log):
     try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open("vinted_logs.txt", "a") as f:
-            f.write(str(log) + "\n")
+            f.write(f"{timestamp} {log}\n")
     except IOError as e:
         logger.error(e, exc_info=True)
         sys.exit()
