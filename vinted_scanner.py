@@ -64,8 +64,6 @@ def load_analyzed_item():
                 if item_id:
                     list_analyzed_items.add(item_id)
 
-        print(f"Number of analyzed items: {len(list_analyzed_items)}")
-
     except FileNotFoundError:
         logger.info("No previous vinted_items.txt found, starting fresh")
     except IOError as e:
@@ -314,6 +312,8 @@ def main():
 
             # Check if the item has already been analyzed to prevent duplicates
             if item_id not in list_analyzed_items:
+
+                print(f"item_id not in list_analyzed_items: {item_id}")
 
                 # Send e-mail notifications if configured
                 if Config.smtp_username and Config.smtp_server:
