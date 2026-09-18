@@ -23,3 +23,9 @@
 2026-09-18 14:57:35.609 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&attribute_ids%5Bcatalog%5D=1904&attribute_ids%5Bbrand%5D=88&attribute_ids%5Bsize%5D=1391%2C1578&order=newest_first | returned: 61 items
 2026-09-18 14:57:36.055 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&attribute_ids%5Bcatalog%5D=1195&attribute_ids%5Bbrand%5D=88%2C+275446%2C+341007&attribute_ids%5Bsize%5D=630%2C631&order=newest_first | returned: 96 items
 2026-09-18 14:57:40.439 Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&search_text=anni+90&attribute_ids%5Bcatalog%5D=3327&attribute_ids%5Bbrand%5D=9081&order=newest_first | returned: 0 items
+2026-09-18 15:12:16.073 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=vittuone | returned: 0 items
+2026-09-18 15:12:16.326 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=capasone | returned: 0 items
+2026-09-18 15:12:16.819 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=capa | returned: 96 items
+2026-09-18 15:12:20.323 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=trulli | returned: 96 items
+2026-09-18 15:12:20.634 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=trullo | returned: 44 items
+2026-09-18 15:12:22.340 Vinted API request: https://api.vinted.es/svc-catalogue/items?page=1&search_text=trull | returned: 96 items
