@@ -1,1 +1,6 @@
 
+Vinted API has returned: 0
+Vinted API has returned: 96
+Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=7800&attribute_ids%5Bcatalog%5D=3002&attribute_ids%5Bvideo_game_platform%5D=1260&order=newest_first
+Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=7800&order=newest_first
+Vinted API request: https://api.vinted.it/svc-catalogue/items?page=1&per_page=100&search_text=fantozzi&attribute_ids%5Bcatalog%5D=4904&order=newest_first
