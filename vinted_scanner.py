@@ -78,6 +78,15 @@ def save_analyzed_item(hash):
         logger.error(e, exc_info=True)
         sys.exit()
 
+# Save logs
+def save_log(log):
+    try:
+        with open("vinted_logs.txt", "a") as f:
+            f.write(str(log) + "\n")
+    except IOError as e:
+        logger.error(e, exc_info=True)
+        sys.exit()
+
 # Send notification e-mail when a new item is found
 def send_email(item_title, item_price, item_url, item_image):
     try:
@@ -255,6 +264,9 @@ def main():
         logger.info("RESPONSE HEADERS: %s", response.headers)
 
         logger.info("Vinted API has returned: %s items", len(items))
+
+        save_log("Vinted API request: %s", response.request.url)
+        save_log("Vinted API has returned: %s items", len(items))
 
         # Process each item returned in the response
         for item in items:
