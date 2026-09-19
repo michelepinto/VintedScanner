@@ -168,12 +168,24 @@ def get_user_details(user_id, session):
 
         response = session.get(
             url,
+            headers=headers,
             timeout=timeoutconnection,
+        )
+
+        logger.info(
+            "Vinted seller request: %s | status: %s",
+            response.url,
+            response.status_code
         )
 
         response.raise_for_status()
 
         data = response.json()
+
+        logger.info(
+            "Vinted seller response: user=%s",
+            "found" if data.get("user") else "NOT FOUND"
+        )
 
         return data.get("user")
 
