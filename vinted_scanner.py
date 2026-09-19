@@ -172,13 +172,18 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
     ]
 
     if seller:
-        city = seller.get("city")
-
-        location = seller.get("country_iso_code", "N/D")
-        
+        import pycountry
+    
+        country_iso_code = seller.get("country_iso_code", "N/A")
+        country = pycountry.countries.get(alpha_2=country_iso_code)
+    
+        location = country.name if country else country_iso_code
+    
+        city = (seller.get("city") or "").strip()
+    
         if city:
             location += f" · {city}"
-        
+    
         seller_info = (
             f"👤 {seller.get('login', 'N/D')} · "
             f"⭐ {seller.get('positive_feedback_count', 0)}/{seller.get('feedback_count', 0)}\n"
@@ -187,7 +192,7 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
             f"👥 {seller.get('followers_count', 0)}\n"
             f"📍 {location}"
         )
-
+    
         caption_lines.append("")
         caption_lines.append(seller_info)
 
@@ -258,31 +263,6 @@ def get_user_details(user_id, cookies, headers):
         response.raise_for_status()
 
         data = response.json()
-
-        return data.get("user")
-
-    except (requests.exceptions.RequestException, ValueError) as e:
-        logger.error(f"Unable to fetch Vinted user {user_id}: {e}")
-        return None
-
-def get_user_details_new(user_id, cookies, headers):
-    try:
-        url = f"{Config.vinted_url}/api/v2/users/{user_id}"
-
-        response = requests.get(
-            url,
-            cookies=cookies,
-            headers=headers,
-            timeout=timeoutconnection,
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        logger.info("Seller response URL: %s", response.url)
-        logger.info("Seller response status: %s", response.status_code)
-        logger.info("Seller response for %s: %s", user_id, data)
 
         return data.get("user")
 
