@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import sys
-import time
 import json
-from urllib import response
 import Config
 import smtplib
 import logging
@@ -10,7 +8,6 @@ import requests
 import email.utils
 import unicodedata
 
-from datetime import datetime
 from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
 
@@ -22,6 +19,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 logger = logging.getLogger(__name__)
@@ -46,7 +44,7 @@ headers = {
     "Sec-Fetch-Dest": "document",
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
-    "Ssec-fetch-user": "?1",
+    "Ssec-Fetch-user": "?1",
     "Upgrade-Insecure-Requests": "1",
     #"Pragma": "no-cache",
     #"Cache-Control": "no-cache",
@@ -112,7 +110,6 @@ def send_email(item_title, item_price, item_url, item_image, favourite_count, se
         logger.error(f"SMTP error sending email: {e}", exc_info=True)
     except Exception as e:
         logger.error(f"Error sending email: {e}", exc_info=True)
-
 
 # Send a Slack message when a new item is found
 def send_slack_message(item_title, item_price, item_url, item_image, favourite_count,seller):
