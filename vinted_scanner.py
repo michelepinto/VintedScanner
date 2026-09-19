@@ -146,30 +146,7 @@ def normalize(text):
         if not unicodedata.combining(c)
     ).lower()
 
-def load_excluded_keywords():
-    keywords = set()
-
-    try:
-        with open("excluded_keywords.txt", "r", encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                keyword = line.strip()
-
-                if keyword and not keyword.startswith("#"):
-                    keywords.add(normalize(keyword))
-
-        logger.info("Loaded %s excluded keywords", len(keywords))
-
-    except FileNotFoundError:
-        logger.info("No excluded_keywords.txt found, no keywords will be excluded")
-
-    except IOError as e:
-        logger.error(e, exc_info=True)
-        sys.exit()
-
-    return keywords
-
-
-def is_excluded2(item_title, item_description, excluded_keywords):
+def is_excluded(item_title, item_description, excluded_keywords):
     if not excluded_keywords:
         return False
 
