@@ -156,21 +156,34 @@ def send_slack_message(item_title, item_price, item_url, item_image, favourite_c
         logger.error(f"Error sending Slack message: {e}")
 
 # Send a Telegram message when a new item is found
-def send_telegram_message(item_title, item_price, item_url, item_image, favourite_count):
+def send_telegram_message(item_title, item_price, item_url, item_image, favourite_count, seller):
     from html import escape
 
     safe_title = escape(str(item_title))
 
     if len(safe_title) > 34:
         safe_title = safe_title[:31] + "…"
-    
+
     safe_url = escape(str(item_url), quote=True)
-    
+
     caption_lines = [
         f'🔗 <a href="{safe_url}">{safe_title}</a>',
         f"💰 {item_price}" + (f" · ❤️ {favourite_count}" if favourite_count > 0 else ""),
     ]
-    
+
+    if seller:
+        seller_info = (
+            f"👤 {seller.get('login', 'N/D')} · "
+            f"⭐ {seller.get('positive_feedback_count', 0)}/{seller.get('feedback_count', 0)}\n"
+            f"📦 {seller.get('item_count', 0)} attivi · "
+            f"{seller.get('total_items_count', 0)} totali · "
+            f"👥 {seller.get('followers_count', 0)}\n"
+            f"🇮🇹 {seller.get('country_title', 'N/D')}"
+        )
+
+        caption_lines.append("")
+        caption_lines.append(seller_info)
+
     caption = "\n".join(caption_lines)
 
     try:
@@ -190,7 +203,12 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
                 "parse_mode": "HTML",
             }
 
-        response = requests.post(url, params=params, headers=headers, timeout=timeoutconnection)
+        response = requests.post(
+            url,
+            params=params,
+            headers=headers,
+            timeout=timeoutconnection
+        )
 
         if response.status_code != 200:
             logger.error(
@@ -218,6 +236,27 @@ def is_excluded(item_title, item_description, excluded_keywords_str):
     text = normalize(f"{item_title} {item_description}")
 
     return any(kw in text for kw in keywords)
+
+def get_user_details(user_id, cookies, headers):
+    try:
+        url = f"{Config.vinted_api_url}/api/v2/users/{user_id}"
+
+        response = requests.get(
+            url,
+            cookies=cookies,
+            headers=headers,
+            timeout=timeoutconnection,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        return data.get("user")
+
+    except (requests.exceptions.RequestException, ValueError) as e:
+        logger.error(f"Unable to fetch Vinted user {user_id}: {e}")
+        return None
 
 def main():
     
@@ -323,6 +362,11 @@ def main():
     
                 # Check if the item has already been analyzed to prevent duplicates
                 if item_id not in list_analyzed_items:
+
+                    user = item.get("user") or {}
+                    user_id = user.get("id")
+                    
+                    seller = get_user_details(user_id, cookies, headers)
     
                     # Send e-mail notifications if configured
                     if Config.smtp_username and Config.smtp_server:
@@ -334,7 +378,7 @@ def main():
                         
                     # Send Telegram notifications if configured
                     if Config.telegram_bot_token and Config.telegram_chat_id:
-                        send_telegram_message(item_title, item_price, item_url, item_image, favourite_count)
+                        send_telegram_message(item_title, item_price, item_url, item_image, favourite_count, seller)
     
                     # Mark item as analyzed and save it
                     list_analyzed_items.add(item_id)
