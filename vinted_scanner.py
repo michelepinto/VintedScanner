@@ -237,9 +237,9 @@ def is_excluded(item_title, item_description, excluded_keywords_str):
 
     return any(kw in text for kw in keywords)
 
-def get_user_details_old(user_id, cookies, headers):
+def get_user_details(user_id, cookies, headers):
     try:
-        url = f"{Config.vinted_api_url}/api/v2/users/{user_id}"
+        url = f"{Config.vinted_url}/api/v2/users/{user_id}"
 
         response = requests.get(
             url,
@@ -258,9 +258,9 @@ def get_user_details_old(user_id, cookies, headers):
         logger.error(f"Unable to fetch Vinted user {user_id}: {e}")
         return None
 
-def get_user_details(user_id, cookies, headers):
+def get_user_details_new(user_id, cookies, headers):
     try:
-        url = f"{Config.vinted_api_url}/api/v2/users/{user_id}"
+        url = f"{Config.vinted_url}/api/v2/users/{user_id}"
 
         response = requests.get(
             url,
