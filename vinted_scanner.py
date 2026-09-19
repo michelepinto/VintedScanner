@@ -91,7 +91,7 @@ def save_log(log):
         sys.exit()
 
 # Send notification e-mail when a new item is found
-def send_email(item_title, item_price, item_url, item_image):
+def send_email(item_title, item_price, item_url, item_image, favourite_count):
     try:
         # Create the e-mail message
         msg = EmailMessage()
@@ -129,7 +129,7 @@ def send_email(item_title, item_price, item_url, item_image):
 
 
 # Send a Slack message when a new item is found
-def send_slack_message(item_title, item_price, item_url, item_image):
+def send_slack_message(item_title, item_price, item_url, item_image, favourite_count):
     webhook_url = Config.slack_webhook_url 
 
     # Format message content
@@ -156,7 +156,7 @@ def send_slack_message(item_title, item_price, item_url, item_image):
         logger.error(f"Error sending Slack message: {e}")
 
 # Send a Telegram message when a new item is found
-def send_telegram_message(item_title, item_price, item_url, item_image):
+def send_telegram_message(item_title, item_price, item_url, item_image, favourite_count):
     from html import escape
 
     safe_title = escape(str(item_title))
@@ -165,6 +165,7 @@ def send_telegram_message(item_title, item_price, item_url, item_image):
     caption = "\n".join([
         f'🔗 <a href="{safe_url}">{safe_title}</a>',
         f"💰 {item_price}",
+        f"❤️ {favourite_count}",
     ])
 
     try:
@@ -298,6 +299,8 @@ def main():
                 else "N/D"
             )
 
+            favourite_count = item.get("favourite_count")
+
             item_photo = item.get("photo") or {}
             item_image = item_photo.get("full_size_url")
 
@@ -311,15 +314,15 @@ def main():
 
                 # Send e-mail notifications if configured
                 if Config.smtp_username and Config.smtp_server:
-                    send_email(item_title, item_price, item_url, item_image)
+                    send_email(item_title, item_price, item_url, item_image, favourite_count)
 
                 # Send Slack notifications if configured
                 if Config.slack_webhook_url:
-                    send_slack_message(item_title, item_price, item_url, item_image)
-
+                    send_slack_message(item_title, item_price, item_url, item_image, favourite_count)
+                    
                 # Send Telegram notifications if configured
                 if Config.telegram_bot_token and Config.telegram_chat_id:
-                    send_telegram_message(item_title, item_price, item_url, item_image)
+                    send_telegram_message(item_title, item_price, item_url, item_image, favourite_count)
 
                 # Mark item as analyzed and save it
                 list_analyzed_items.add(item_id)
