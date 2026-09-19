@@ -324,7 +324,10 @@ def main():
             for item in items:
                 item_id = str(item["id"])
                 item_title = item["title"]
-                item_description = item.get("description") or ""
+
+                item_box = item.get("item_box") or {}                
+                item_description = item_box.get("accessibility_label") or ""
+                
                 item_url = vinted_url + item["url"]
     
                 item_price_data = item.get("price") or {}
