@@ -390,8 +390,10 @@ def main():
 
                     user = item.get("user") or {}
                     user_id = user.get("id")
-                    
+
+                    logger.info("Vinted get_user_details triggered 1")
                     seller = get_user_details(user_id, cookies, headers)
+                    logger.info("Vinted get_user_details triggered 2")
     
                     # Send e-mail notifications if configured
                     if Config.smtp_username and Config.smtp_server:
