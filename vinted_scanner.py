@@ -189,7 +189,7 @@ def is_excluded(item_title, item_description, excluded_keywords):
             "DEBUG CHIMICA | title=%r | description=%r | keyword_found=%s",
             item_title,
             item_description,
-            "chimica" in text
+            any(keyword in text for keyword in excluded_keywords)
         )
 
     return any(keyword in text for keyword in excluded_keywords)
