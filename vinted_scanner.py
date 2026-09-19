@@ -337,6 +337,7 @@ def main():
             for item in items:
                 item_id = str(item["id"])
                 item_title = item["title"]
+                logger.info(item_title)
                 item_description = item.get("description") or ""
                 item_url = vinted_url + item["url"]
     
