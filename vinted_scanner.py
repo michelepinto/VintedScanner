@@ -26,9 +26,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-logger.info("Scanner started")
-
-
 # Timeout configuration for the requests
 timeoutconnection = 30
 
@@ -79,19 +76,8 @@ def save_analyzed_item(hash):
         logger.error(e, exc_info=True)
         sys.exit()
 
-# Save logs
-from datetime import datetime
-def save_log(log):
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        with open("vinted_logs.txt", "a") as f:
-            f.write(f"{timestamp} {log}\n")
-    except IOError as e:
-        logger.error(e, exc_info=True)
-        sys.exit()
-
 # Send notification e-mail when a new item is found
-def send_email(item_title, item_price, item_url, item_image, favourite_count):
+def send_email(item_title, item_price, item_url, item_image, favourite_count, seller):
     try:
         # Create the e-mail message
         msg = EmailMessage()
@@ -129,7 +115,7 @@ def send_email(item_title, item_price, item_url, item_image, favourite_count):
 
 
 # Send a Slack message when a new item is found
-def send_slack_message(item_title, item_price, item_url, item_image, favourite_count):
+def send_slack_message(item_title, item_price, item_url, item_image, favourite_count,seller):
     webhook_url = Config.slack_webhook_url 
 
     # Format message content
@@ -279,7 +265,6 @@ def main():
     load_analyzed_item()
 
     # Initialize session and obtain session cookies from Vinted
-    logger.info("Initializing session and obtain session cookies from Vinted")
     session = requests.Session()
     session.post(vinted_url, headers=headers, timeout=timeoutconnection)
     cookies = session.cookies.get_dict()
@@ -328,16 +313,10 @@ def main():
     
             logger.info("Vinted API has returned: %s items", len(items))
     
-            save_log(
-                "Vinted API request: %s | returned: %s items"
-                % (response.request.url, len(items))
-            )
-    
             # Process each item returned in the response
             for item in items:
                 item_id = str(item["id"])
                 item_title = item["title"]
-                logger.info(item_title)
                 item_description = item.get("description") or ""
                 item_url = vinted_url + item["url"]
     
@@ -379,17 +358,15 @@ def main():
                     user = item.get("user") or {}
                     user_id = user.get("id")
 
-                    logger.info("Vinted get_user_details triggered 1")
                     seller = get_user_details(user_id, cookies, headers)
-                    logger.info("Vinted get_user_details triggered 2")
     
                     # Send e-mail notifications if configured
                     if Config.smtp_username and Config.smtp_server:
-                        send_email(item_title, item_price, item_url, item_image, favourite_count)
+                        send_email(item_title, item_price, item_url, item_image, favourite_count, seller)
     
                     # Send Slack notifications if configured
                     if Config.slack_webhook_url:
-                        send_slack_message(item_title, item_price, item_url, item_image, favourite_count)
+                        send_slack_message(item_title, item_price, item_url, item_image, favourite_count, seller)
                         
                     # Send Telegram notifications if configured
                     if Config.telegram_bot_token and Config.telegram_chat_id:
@@ -401,7 +378,6 @@ def main():
 
             # If fewer than 96 items were returned, this is the last page
             if len(items) < 96:
-                logger.info("Last page reached: %s", page)
                 break
     
             page += 1
