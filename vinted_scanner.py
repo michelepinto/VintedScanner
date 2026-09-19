@@ -187,12 +187,6 @@ def get_user_details(user_id, session):
             timeout=timeoutconnection,
         )
 
-        logger.info(
-            "Vinted seller request: %s | status: %s",
-            response.url,
-            response.status_code
-        )
-
         response.raise_for_status()
 
         data = response.json()
