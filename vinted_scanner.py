@@ -162,11 +162,30 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
     safe_title = escape(str(item_title))
     safe_url = escape(str(item_url), quote=True)
     
-    caption = "\n".join([
+    caption_lines = [
         f'🔗 <a href="{safe_url}">{safe_title}</a>',
         f"💰 {item_price}",
-        f"❤️ {favourite_count}",
-    ])
+    ]
+    
+    if favourite_count > 0:
+        caption_lines.append(f"❤️ {favourite_count}")
+    
+    caption = "\n".join(caption_lines)
+
+    from html import escape
+
+    safe_title = escape(str(item_title))
+    safe_url = escape(str(item_url), quote=True)
+    
+    caption_lines = [
+        f'🔗 <a href="{safe_url}">{safe_title}</a>',
+        f"💰 {item_price}",
+    ]
+    
+    if favourite_count > 0:
+        caption_lines.append(f"❤️ {favourite_count}")
+    
+    caption = "\n".join(caption_lines)
 
     try:
         if item_image:
