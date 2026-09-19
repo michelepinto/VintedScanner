@@ -161,8 +161,8 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
 
     safe_title = escape(str(item_title))
 
-    if len(safe_title) > 31:
-        safe_title = safe_title[:28] + "…"
+    if len(safe_title) > 32:
+        safe_title = safe_title[:29] + "…"
     
     safe_url = escape(str(item_url), quote=True)
     
