@@ -38,8 +38,7 @@ headers = {
     "Sec-Fetch-Dest": "document",
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
-    "Ssec-Fetch-user": "?1",
-    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-User": "?1",
     #"Pragma": "no-cache",
     #"Cache-Control": "no-cache",
 }
@@ -131,7 +130,6 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
         response = requests.post(
             url,
             params=params,
-            headers=headers,
             timeout=timeoutconnection
         )
 
@@ -279,7 +277,7 @@ def main():
                     else "N/D"
                 )
     
-                favourite_count = item.get("favourite_count")
+                favourite_count = item.get("favourite_count") or 0
     
                 item_photo = item.get("photo") or {}
                 item_image = item_photo.get("full_size_url")
