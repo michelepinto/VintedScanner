@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 import sys
-import json
 import Config
-import smtplib
 import logging
 import requests
 import unicodedata
-
-from logging.handlers import RotatingFileHandler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -145,20 +141,41 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
         logger.error(f"Error sending Telegram message: {e}")
 
 def normalize(text):
-    return unicodedata.normalize("NFKD", text).lower()
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", str(text))
+        if not unicodedata.combining(c)
+    ).lower()
 
-def is_excluded(item_title, item_description, excluded_keywords_str):
-    if not excluded_keywords_str:
+def load_excluded_keywords():
+    keywords = set()
+
+    try:
+        with open("excluded_keywords.txt", "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                keyword = line.strip()
+
+                if keyword and not keyword.startswith("#"):
+                    keywords.add(normalize(keyword))
+
+        logger.info("Loaded %s excluded keywords", len(keywords))
+
+    except FileNotFoundError:
+        logger.info("No excluded_keywords.txt found, no keywords will be excluded")
+
+    except IOError as e:
+        logger.error(e, exc_info=True)
+        sys.exit()
+
+    return keywords
+
+
+def is_excluded(item_title, item_description, excluded_keywords):
+    if not excluded_keywords:
         return False
 
-    keywords = [
-        normalize(kw.strip())
-        for kw in excluded_keywords_str.split(",")
-        if kw.strip()
-    ]
     text = normalize(f"{item_title} {item_description}")
-    
-    return any(kw in text for kw in keywords)
+
+    return any(keyword in text for keyword in excluded_keywords)
 
 def get_user_details(user_id, session):
     try:
@@ -198,6 +215,9 @@ def main():
     # Load the list of previously analyzed items
     logger.info("Loading the list of previously analyzed items")
     load_analyzed_item()
+
+    # Load excluded keywords
+    excluded_keywords = load_excluded_keywords()
 
     # Initialize session
     session = requests.Session()
@@ -283,7 +303,7 @@ def main():
                 item_image = item_photo.get("full_size_url")
     
                 # Skip items whose title or description match any excluded keyword
-                if is_excluded(item_title, item_description, Config.excluded_keywords):
+                if is_excluded(item_title, item_description, excluded_keywords):
                     # logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
                     ignored_items += 1
                     continue
