@@ -11,13 +11,9 @@ import unicodedata
 from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
 
-
-# Configure a rotating file handler to manage log files
-handler = RotatingFileHandler("vinted_scanner.log", maxBytes=5000000, backupCount=5)
-
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
+    format="%(asctime)s.%(msecs)03d %(levelname)s %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
     datefmt="%Y-%m-%d %H:%M:%S",
 )
@@ -50,7 +46,7 @@ headers = {
     #"Cache-Control": "no-cache",
 }
 
-# Load previously analyzed item hashes to avoid duplicates
+# Load previously analyzed item IDs to avoid duplicates
 def load_analyzed_item():
     try:
         with open("vinted_items.txt", "r", errors="ignore") as f:
@@ -66,10 +62,10 @@ def load_analyzed_item():
         sys.exit()
 
 # Save a new analyzed item to prevent repeated alerts
-def save_analyzed_item(hash):
+def save_analyzed_item(item_id):
     try:
         with open("vinted_items.txt", "a") as f:
-            f.write(str(hash) + "\n")
+            f.write(str(item_id) + "\n")
     except IOError as e:
         logger.error(e, exc_info=True)
         sys.exit()
@@ -277,22 +273,15 @@ def main():
             # Request items from the Vinted API based on the search parameters
             try:
                 url = f"{Config.vinted_api_url}/svc-catalogue/items"
-    
-                prepared_request = requests.Request(
-                    "GET",
-                    url,
-                    params=params
-                ).prepare()
-    
-                logger.info("Vinted URL triggered: %s", prepared_request.url)
-    
-                response = requests.get(
+
+                response = session.get(
                     url,
                     params=params,
-                    cookies=cookies,
                     headers=headers,
                     timeout=timeoutconnection,
                 )
+    
+                logger.info("Vinted URL triggered: %s", response.url)
                 
                 response.raise_for_status()
                 data = response.json()
