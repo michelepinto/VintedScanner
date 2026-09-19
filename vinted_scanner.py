@@ -314,6 +314,11 @@ def main():
             logger.info("Vinted API has returned: %s items", len(items))
     
             # Process each item returned in the response
+
+            ignored_items = 0
+            already_notified_items = 0
+            notified_items = 0
+                    
             for item in items:
                 item_id = str(item["id"])
                 item_title = item["title"]
@@ -349,12 +354,15 @@ def main():
     
                 # Skip items whose title or description match any excluded keyword
                 if is_excluded(item_title, item_description, Config.excluded_keywords):
-                    logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                    # logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                    ignored_items += 1
                     continue
     
                 # Check if the item has already been analyzed to prevent duplicates
                 if item_id not in list_analyzed_items:
 
+                    notified_items += 1
+                    
                     user = item.get("user") or {}
                     user_id = user.get("id")
 
@@ -375,6 +383,13 @@ def main():
                     # Mark item as analyzed and save it
                     list_analyzed_items.add(item_id)
                     save_analyzed_item(item_id)
+
+                else:
+                    already_notified_items += 1
+
+            logger.info(f"Items ignored: {ignored_items}")
+            logger.info(f"Items already notified: {already_notified_items}")
+            logger.info(f"Items notified: {notified_items}")
 
             # If fewer than 96 items were returned, this is the last page
             if len(items) < 96:
