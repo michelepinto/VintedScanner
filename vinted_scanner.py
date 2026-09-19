@@ -169,11 +169,28 @@ def load_excluded_keywords():
     return keywords
 
 
+def is_excluded2(item_title, item_description, excluded_keywords):
+    if not excluded_keywords:
+        return False
+
+    text = normalize(f"{item_title} {item_description}")
+
+    return any(keyword in text for keyword in excluded_keywords)
+
+
 def is_excluded(item_title, item_description, excluded_keywords):
     if not excluded_keywords:
         return False
 
     text = normalize(f"{item_title} {item_description}")
+
+    if "chimica" in text:
+        logger.info(
+            "DEBUG CHIMICA | title=%r | description=%r | keyword_found=%s",
+            item_title,
+            item_description,
+            "chimica" in text
+        )
 
     return any(keyword in text for keyword in excluded_keywords)
 
