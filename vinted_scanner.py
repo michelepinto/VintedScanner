@@ -233,6 +233,8 @@ def is_excluded(item_title, item_description, excluded_keywords_str):
     ]
     text = normalize(f"{item_title} {item_description}")
 
+    logger.info(f"Description: {text}")
+    
     return any(kw in text for kw in keywords)
 
 def get_user_details(user_id, cookies, headers):
