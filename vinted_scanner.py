@@ -35,8 +35,8 @@ headers = {
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
     "Sec-Fetch-User": "?1",
-    #"Pragma": "no-cache",
-    #"Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "Cache-Control": "no-cache",
 }
 
 # Load previously analyzed item IDs to avoid duplicates
