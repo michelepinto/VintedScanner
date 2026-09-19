@@ -175,10 +175,10 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
         seller_info = (
             f"👤 {seller.get('login', 'N/D')} · "
             f"⭐ {seller.get('positive_feedback_count', 0)}/{seller.get('feedback_count', 0)}\n"
-            f"📦 {seller.get('item_count', 0)} attivi · "
-            f"{seller.get('total_items_count', 0)} totali · "
+            f"📦 {seller.get('item_count', 0)} for sale · "
+            f"{seller.get('total_items_count', 0)} total · "
             f"👥 {seller.get('followers_count', 0)}\n"
-            f"🇮🇹 {seller.get('country_title', 'N/D')}"
+            f"📍 {seller.get('country_iso_code', 'N/D')}"
         )
 
         caption_lines.append("")
@@ -370,7 +370,7 @@ def main():
                 item_currency = '€'
                 item_price = (
                     f"{item_amount} {item_currency} "
-                    f"({item_total_amount} {item_currency} w/Fee)"
+                    f"({item_total_amount} {item_currency} w/fee)"
                     if item_amount != "N/D" and item_total_amount != "N/D"
                     else "N/D"
                 )
