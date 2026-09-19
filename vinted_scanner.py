@@ -172,21 +172,6 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
     
     caption = "\n".join(caption_lines)
 
-    from html import escape
-
-    safe_title = escape(str(item_title))
-    safe_url = escape(str(item_url), quote=True)
-    
-    caption_lines = [
-        f'🔗 <a href="{safe_url}">{safe_title}</a>',
-        f"💰 {item_price}",
-    ]
-    
-    if favourite_count > 0:
-        caption_lines.append(f"❤️ {favourite_count}")
-    
-    caption = "\n".join(caption_lines)
-
     try:
         if item_image:
             url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendPhoto"
@@ -249,103 +234,117 @@ def main():
 
     # Loop through each search query defined in Config.py
     for params in Config.queries:
-        # Request items from the Vinted API based on the search parameters
-        try:
-            url = f"{Config.vinted_api_url}/svc-catalogue/items"
+        
+        page = 1
 
-            prepared_request = requests.Request(
-                "GET",
-                url,
-                params=params
-            ).prepare()
-
-            logger.info("Vinted URL triggered: %s", prepared_request.url)
-
-            response = requests.get(
-                url,
-                params=params,
-                cookies=cookies,
-                headers=headers,
-                timeout=timeoutconnection,
+        while True:
+            params["page"] = page
+        
+            # Request items from the Vinted API based on the search parameters
+            try:
+                url = f"{Config.vinted_api_url}/svc-catalogue/items"
+    
+                prepared_request = requests.Request(
+                    "GET",
+                    url,
+                    params=params
+                ).prepare()
+    
+                logger.info("Vinted URL triggered: %s", prepared_request.url)
+    
+                response = requests.get(
+                    url,
+                    params=params,
+                    cookies=cookies,
+                    headers=headers,
+                    timeout=timeoutconnection,
+                )
+                
+                response.raise_for_status()
+                data = response.json()
+            except (requests.exceptions.RequestException, ValueError) as e:
+                logger.error(f"Unable to fetch Vinted page {page}: {e}")
+                break
+    
+            items = data.get("items") if isinstance(data, dict) else None
+            if not isinstance(items, list):
+                logger.error(
+                    "Vinted response did not contain an items list "
+                    f"(status={response.status_code}, keys={list(data) if isinstance(data, dict) else 'N/A'})"
+                )
+                break
+    
+            logger.info("Vinted API has returned: %s items", len(items))
+    
+            save_log(
+                "Vinted API request: %s | returned: %s items"
+                % (response.request.url, len(items))
             )
-            
-            response.raise_for_status()
-            data = response.json()
-        except (requests.exceptions.RequestException, ValueError) as e:
-            logger.error(f"Unable to fetch Vinted items: {e}")
+    
+            # Process each item returned in the response
+            for item in items:
+                item_id = str(item["id"])
+                item_title = item["title"]
+                item_description = item.get("description") or ""
+                item_url = vinted_url + item["url"]
+    
+                item_price_data = item.get("price") or {}
+                amount = item_price_data.get("amount")
+                item_amount = (
+                    f"{float(amount):.2f}".replace(".", ",")
+                    if amount is not None
+                    else "N/D"
+                )
+                item_total_price_data = item.get("total_item_price") or {}
+                total_amount = item_total_price_data.get("amount")
+                item_total_amount = (
+                    f"{float(total_amount):.2f}".replace(".", ",")
+                    if total_amount is not None
+                    else "N/D"
+                )
+                item_currency = '€'
+                item_price = (
+                    f"{item_amount} {item_currency} "
+                    f"({item_total_amount} {item_currency} With Fee)"
+                    if item_amount != "N/D" and item_total_amount != "N/D"
+                    else "N/D"
+                )
+    
+                favourite_count = item.get("favourite_count")
+    
+                item_photo = item.get("photo") or {}
+                item_image = item_photo.get("full_size_url")
+    
+                # Skip items whose title or description match any excluded keyword
+                if is_excluded(item_title, item_description, Config.excluded_keywords):
+                    logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                    continue
+    
+                # Check if the item has already been analyzed to prevent duplicates
+                if item_id not in list_analyzed_items:
+    
+                    # Send e-mail notifications if configured
+                    if Config.smtp_username and Config.smtp_server:
+                        send_email(item_title, item_price, item_url, item_image, favourite_count)
+    
+                    # Send Slack notifications if configured
+                    if Config.slack_webhook_url:
+                        send_slack_message(item_title, item_price, item_url, item_image, favourite_count)
+                        
+                    # Send Telegram notifications if configured
+                    if Config.telegram_bot_token and Config.telegram_chat_id:
+                        send_telegram_message(item_title, item_price, item_url, item_image, favourite_count)
+    
+                    # Mark item as analyzed and save it
+                    list_analyzed_items.add(item_id)
+                    save_analyzed_item(item_id)
 
-        items = data.get("items") if isinstance(data, dict) else None
-        if not isinstance(items, list):
-            logger.error(
-                "Vinted response did not contain an items list "
-                f"(status={response.status_code}, keys={list(data) if isinstance(data, dict) else 'N/A'})"
-            )
-            continue
-
-        logger.info("Vinted API has returned: %s items", len(items))
-
-        save_log(
-            "Vinted API request: %s | returned: %s items"
-            % (response.request.url, len(items))
-        )
-
-        # Process each item returned in the response
-        for item in items:
-            item_id = str(item["id"])
-            item_title = item["title"]
-            item_description = item.get("description") or ""
-            item_url = vinted_url + item["url"]
-
-            item_price_data = item.get("price") or {}
-            amount = item_price_data.get("amount")
-            item_amount = (
-                f"{float(amount):.2f}".replace(".", ",")
-                if amount is not None
-                else "N/D"
-            )
-            item_total_price_data = item.get("total_item_price") or {}
-            total_amount = item_total_price_data.get("amount")
-            item_total_amount = (
-                f"{float(total_amount):.2f}".replace(".", ",")
-                if total_amount is not None
-                else "N/D"
-            )
-            item_currency = '€'
-            item_price = (
-                f"{item_amount} {item_currency} "
-                f"({item_total_amount} {item_currency} With Fee)"
-                if item_amount != "N/D" and item_total_amount != "N/D"
-                else "N/D"
-            )
-
-            favourite_count = item.get("favourite_count")
-
-            item_photo = item.get("photo") or {}
-            item_image = item_photo.get("full_size_url")
-
-            # Skip items whose title or description match any excluded keyword
-            if is_excluded(item_title, item_description, Config.excluded_keywords):
-                logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
-                continue
-
-            # Check if the item has already been analyzed to prevent duplicates
-            if item_id not in list_analyzed_items:
-
-                # Send e-mail notifications if configured
-                if Config.smtp_username and Config.smtp_server:
-                    send_email(item_title, item_price, item_url, item_image, favourite_count)
-
-                # Send Slack notifications if configured
-                if Config.slack_webhook_url:
-                    send_slack_message(item_title, item_price, item_url, item_image, favourite_count)
-                    
-                # Send Telegram notifications if configured
-                if Config.telegram_bot_token and Config.telegram_chat_id:
-                    send_telegram_message(item_title, item_price, item_url, item_image, favourite_count)
-
-                # Mark item as analyzed and save it
-                list_analyzed_items.add(item_id)
-                save_analyzed_item(item_id)
+            # If fewer than 96 items were returned, this is the last page
+            if len(items) < 96:
+                logger.info("Last page reached: %s", page)
+                break
+    
+            page += 1
 
 if __name__ == "__main__":
     main()
