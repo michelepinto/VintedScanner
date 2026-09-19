@@ -228,14 +228,12 @@ def is_excluded(item_title, item_description, excluded_keywords_str):
     
     return any(kw in text for kw in keywords)
 
-def get_user_details(user_id, cookies, headers):
+def get_user_details(user_id, session):
     try:
         url = f"{Config.vinted_url}/api/v2/users/{user_id}"
 
-        response = requests.get(
+        response = session.get(
             url,
-            cookies=cookies,
-            headers=headers,
             timeout=timeoutconnection,
         )
 
@@ -257,10 +255,9 @@ def main():
     logger.info("Loading the list of previously analyzed items")
     load_analyzed_item()
 
-    # Initialize session and obtain session cookies from Vinted
+    # Initialize session
     session = requests.Session()
     session.post(vinted_url, headers=headers, timeout=timeoutconnection)
-    cookies = session.cookies.get_dict()
 
     # Loop through each search query defined in Config.py
     for params in Config.queries:
@@ -355,7 +352,7 @@ def main():
                     user = item.get("user") or {}
                     user_id = user.get("id")
 
-                    seller = get_user_details(user_id, cookies, headers)
+                    seller = get_user_details(user_id, session)
     
                     # Send e-mail notifications if configured
                     if Config.smtp_username and Config.smtp_server:
