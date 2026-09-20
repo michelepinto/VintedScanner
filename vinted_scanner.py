@@ -231,7 +231,7 @@ def main():
                     timeout=timeoutconnection,
                 )
     
-                logger.info("Vinted URL triggered: %s", response.url)
+                logger.info("URL triggered: %s", response.url)
                 
                 response.raise_for_status()
                 data = response.json()
