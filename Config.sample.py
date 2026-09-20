@@ -1,12 +1,3 @@
-# SMTP Settings for e-mail notification
-smtp_username = ""
-smtp_psw = ""
-smtp_server = ""
-smtp_toaddrs = ["User <example@example.com>"]
-
-# Slack WebHook for notification
-slack_webhook_url = ""
-
 # Telegram Token and ChatID for notification
 telegram_bot_token = ""
 telegram_chat_id = ""
@@ -15,11 +6,10 @@ telegram_chat_id = ""
 vinted_url = "https://www.vinted.it"
 vinted_api_url = "https://api.vinted.it"
 
-# Comma-separated list of strings to exclude from results (case-insensitive)
-excluded_keywords = ""
+# Number of pages to scan for each request (default is 2)
+pages = 3
 
 # Vinted queries for research
-# "page", "per_page" and "order" you may not edit them
 # "search_text" is the free search field, this field may be empty if you wish to search for the entire brand.
 # "attribute_ids[catalog]" is the category in which to eventually search, if the field is empty it will search in all categories. Vinted assigns a numeric ID to each category, e.g. 2996 is the ID for e-Book Reader
 # "attribute_ids[brand]" if you want to search by brand. Vinted assigns a numeric ID to each brand, e.g. 417 is the ID for Louis Vuitton
@@ -27,24 +17,18 @@ excluded_keywords = ""
 
 queries = [
     {
-        'page': '1',
-        'per_page': '96',
         'search_text': '',
         'attribute_ids[catalog]': '',
         'attribute_ids[brand]' : '417',
         'order': 'newest_first',
     },
     {
-        'page': '1',
-        'per_page': '96',
         'search_text': 't-shirt',
         'attribute_ids[catalog]': '',
         'attribute_ids[brand]' : '',
         'order': 'newest_first',
     },
     {
-        'page': '1',
-        'per_page': '96',
         'search_text': '',
         'attribute_ids[catalog]': '2996',
         'attribute_ids[brand]' : '',
