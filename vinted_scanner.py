@@ -247,7 +247,7 @@ def main():
                 )
                 break
     
-            logger.info("Vinted API has returned: %s items", len(items))
+            logger.info("API has returned: %s items", len(items))
     
             # Process each item returned in the response
 
