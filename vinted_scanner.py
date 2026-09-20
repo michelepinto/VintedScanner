@@ -217,7 +217,7 @@ def main():
         
         page = 1
 
-        while page <= 2:
+        while page <= Config.pages:
             params["page"] = page
         
             # Request items from the Vinted API based on the search parameters
