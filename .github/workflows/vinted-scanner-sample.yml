@@ -1,4 +1,4 @@
-name: Vinted Scanner Michele
+name: Vinted Scanner Sample
 
 on:
   workflow_dispatch:
@@ -12,4 +12,4 @@ jobs:
   scan:
     uses: ./.github/workflows/_vinted-scanner-template.yml
     secrets:
-      vinted_config: ${{ secrets.VINTED_CONFIG_MICHELE }}
+      vinted_config: ${{ secrets.VINTED_CONFIG_SAMPLE }}
