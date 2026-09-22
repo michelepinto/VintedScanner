@@ -168,6 +168,18 @@ def load_excluded_keywords():
 
     return keywords
 
+def log_item_for_analysis(item_title, item_description):
+    try:
+        with open(
+            "item_text_analysis.log",
+            "a",
+            encoding="utf-8"
+        ) as f:
+            f.write(
+                normalize(f"{item_title} {item_description}")
+            )
+    except IOError as e:
+        logger.error("Unable to write analysis log: %s", e)
 
 def is_excluded(item_title, item_description, excluded_keywords):
     if not excluded_keywords:
@@ -296,6 +308,8 @@ def main():
                     # logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
                     ignored_items += 1
                     continue
+                
+                log_item_for_analysis(item_title, item_description)
     
                 # Check if the item has already been analyzed to prevent duplicates
                 if item_id not in list_analyzed_items:
