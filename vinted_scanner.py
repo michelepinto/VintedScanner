@@ -305,7 +305,7 @@ def main():
     
                 # Skip items whose title or description match any excluded keyword
                 if is_excluded(item_title, item_description, excluded_keywords):
-                    # logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
+                    logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
                     ignored_items += 1
                     continue
     
