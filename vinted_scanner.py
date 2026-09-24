@@ -188,9 +188,7 @@ def is_excluded(item_title, item_description, excluded_keywords):
     text = normalize(f"{item_title} {item_description}")
     for keyword in excluded_keywords:
         if keyword in text:
-            logger.info(
-                f"Excluded item - matching keyword: '{keyword}'"
-            )
+            # logger.info(f"Excluded item - matching keyword: '{keyword}'")
             return True
     return False
     # return any(keyword in text for keyword in excluded_keywords)
@@ -269,7 +267,7 @@ def main():
     
             # Process each item returned in the response
 
-            ignored_items = 0
+            excluded_items = 0
             already_notified_items = 0
             notified_items = 0
                     
@@ -311,8 +309,8 @@ def main():
     
                 # Skip items whose title or description match any excluded keyword
                 if is_excluded(item_title, item_description, excluded_keywords):
-                    logger.info(f"Skipping excluded item [{item_id}]: {item_title}")
-                    ignored_items += 1
+                    # logger.info(f"Excluding item [{item_id}]: {item_title}")
+                    excluded_items += 1
                     continue
     
                 # Check if the item has already been analyzed to prevent duplicates
@@ -338,7 +336,7 @@ def main():
                 else:
                     already_notified_items += 1
 
-            logger.info(f"Items ignored: {ignored_items}")
+            logger.info(f"Items excluded: {excluded_items}")
             logger.info(f"Items already notified: {already_notified_items}")
             logger.info(f"Items notified: {notified_items}")
 
