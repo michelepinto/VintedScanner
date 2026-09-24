@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 # Timeout configuration for the requests
 timeoutconnection = 30
 
-# List to keep track of already analyzed items
-list_analyzed_items = set()
+# List to keep track of already notified items
+already_notified_items = set()
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
@@ -39,25 +39,25 @@ headers = {
     "Cache-Control": "no-cache",
 }
 
-# Load previously analyzed item IDs to avoid duplicates
-def load_analyzed_item():
+# Load already notified item IDs to avoid duplicates
+def load_already_notified_items():
     try:
-        with open("vinted_items.txt", "r", errors="ignore") as f:
+        with open("already_notified_items.txt", "r", errors="ignore") as f:
             for line in f:
                 item_id = line.strip()
                 if item_id:
-                    list_analyzed_items.add(item_id)
+                    already_notified_items.add(item_id)
 
     except FileNotFoundError:
-        logger.info("No previous vinted_items.txt found, starting fresh")
+        logger.info("No previous already_notified_items.txt found, starting fresh")
     except IOError as e:
         logger.error(e, exc_info=True)
         sys.exit()
 
-# Save a new analyzed item to prevent repeated alerts
-def save_analyzed_item(item_id):
+# Save a new notified item to prevent repeated alerts
+def save_already_notified_item(item_id):
     try:
-        with open("vinted_items.txt", "a") as f:
+        with open("already_notified_items.txt", "a") as f:
             f.write(str(item_id) + "\n")
     except IOError as e:
         logger.error(e, exc_info=True)
@@ -204,9 +204,9 @@ def main():
     
     vinted_url = Config.vinted_url
 
-    # Load the list of previously analyzed items
-    logger.info("Loading the list of previously analyzed items")
-    load_analyzed_item()
+    # Load the list of already notified items
+    logger.info("Loading the list of already notified items")
+    load_already_notified_items()
 
     # Load excluded keywords
     excluded_keywords = load_excluded_keywords()
@@ -254,9 +254,9 @@ def main():
     
             # Process each item returned in the response
 
-            excluded_items = 0
-            already_notified_items = 0
-            notified_items = 0
+            excluded_counters = 0
+            already_notified_counter = 0
+            notified_counter = 0
                     
             for item in items:
                 item_id = str(item["id"])
@@ -297,13 +297,13 @@ def main():
                 # Skip items whose title or description match any excluded keyword
                 if is_excluded(item_title, item_description, excluded_keywords):
                     # logger.info(f"Excluding item [{item_id}]: {item_title}")
-                    excluded_items += 1
+                    excluded_counters += 1
                     continue
     
-                # Check if the item has already been analyzed to prevent duplicates
-                if item_id not in list_analyzed_items:
+                # Check if the item has already been notified to prevent sending it again
+                if item_id not in already_notified_items:
 
-                    notified_items += 1
+                    notified_counter += 1
                     
                     user = item.get("user") or {}
                     user_id = user.get("id")
@@ -314,16 +314,16 @@ def main():
                     if Config.telegram_bot_token and Config.telegram_chat_id:
                         send_telegram_message(item_title, item_price, item_url, item_image, favourite_count, seller)
     
-                    # Mark item as analyzed and save it
-                    list_analyzed_items.add(item_id)
-                    save_analyzed_item(item_id)
+                    # Mark item as notified and save it
+                    already_notified_items.add(item_id)
+                    save_already_notified_item(item_id)
 
                 else:
-                    already_notified_items += 1
+                    already_notified_counter += 1
 
-            logger.info(f"Items excluded: {excluded_items}")
-            logger.info(f"Items already notified: {already_notified_items}")
-            logger.info(f"Items notified: {notified_items}")
+            logger.info(f"Items excluded: {excluded_counters}")
+            logger.info(f"Items already notified: {already_notified_counter}")
+            logger.info(f"Items notified: {notified_counter}")
 
             # If fewer than 96 items were returned, this is the last page
             if len(items) < 96:
