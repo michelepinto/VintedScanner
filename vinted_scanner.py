@@ -186,8 +186,14 @@ def is_excluded(item_title, item_description, excluded_keywords):
         return False
 
     text = normalize(f"{item_title} {item_description}")
-
-    return any(keyword in text for keyword in excluded_keywords)
+    for keyword in excluded_keywords:
+        if keyword in text:
+            logger.info(
+                f"Excluded item - matching keyword: '{keyword}'"
+            )
+            return True
+    return False
+    # return any(keyword in text for keyword in excluded_keywords)
 
 def get_user_details(user_id, session):
     try:
