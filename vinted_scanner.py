@@ -168,19 +168,6 @@ def load_excluded_keywords():
 
     return keywords
 
-def log_notified_items(item_title, item_description):
-    try:
-        with open(
-            "notified_items.log",
-            "a",
-            encoding="utf-8"
-        ) as f:
-            f.write(
-                normalize(f"{item_title} {item_description}") + "\n"
-            )
-    except IOError as e:
-        logger.error("Unable to write analysis log: %s", e)
-
 def is_excluded(item_title, item_description, excluded_keywords):
     if not excluded_keywords:
         return False
@@ -330,8 +317,6 @@ def main():
                     # Mark item as analyzed and save it
                     list_analyzed_items.add(item_id)
                     save_analyzed_item(item_id)
-
-                    log_notified_items(item_title, item_description)
 
                 else:
                     already_notified_items += 1
