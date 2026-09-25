@@ -201,6 +201,12 @@ def get_user_details(user_id, session):
         return None
 
 def main():
+
+    logger.info("")
+    logger.info("========================================")
+    logger.info("           VINTED SCANNER")
+    logger.info("========================================")
+    logger.info("")
     
     vinted_url = Config.vinted_url
 
