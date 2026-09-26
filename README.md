@@ -37,14 +37,14 @@ Vinted has no real-time alerting for new listings. This script fills that gap: i
 
 One run of `vinted_scanner.py` does the following:
 
-1. Loads the IDs of items already seen from `vinted_items.txt` into memory.
+1. Loads the IDs of items already seen from `already_notified_items.txt` into memory.
 2. Loads exclusion keywords from `excluded_keywords.txt`, if that file exists.
 3. Opens a `requests.Session` and hits the storefront once (`vinted_url`) with browser-like headers so the session picks up the cookies the catalogue API expects.
-4. For every entry in `Config.queries`, requests `{vinted_api_url}/svc-catalogue/items` page by page, up to `Config.pages` pages. A page returning fewer than 96 items is treated as the last one, and the loop stops early.
+4. For every entry in `Config.queries`, requests `{vinted_api_url}/svc-catalogue/items` page by page, up to `Config.pages` pages. Treat any page with fewer than 96 items as the last page, and stop early.
 5. For every item returned:
    - Skips it if the title or the item's accessibility label matches an excluded keyword.
-   - Skips it if the item ID is already in the seen set.
-   - Otherwise fetches the seller's public profile (`{vinted_url}/api/v2/users/{id}`), sends a Telegram message, then records the ID in memory and appends it to `vinted_items.txt`.
+   - Skips it if the item ID is already in the notified set.
+   - Otherwise, fetches the seller's public profile (`{vinted_url}/api/v2/users/{id}`), sends a Telegram message, then records the ID in memory and appends it to `already_notified_items.txt`.
 6. Logs a per-page tally of items ignored, already notified and newly notified.
 
 Logging goes to **stdout** with timestamps, at `INFO` level. Nothing is written to a log file by the script itself.
@@ -57,11 +57,10 @@ Logging goes to **stdout** with timestamps, at `INFO` level. Nothing is written 
 | `Config.sample.py` | Template configuration. Copy it to `Config.py` and edit. |
 | `requirements.txt` | `requests`, `pycountry`. |
 | `.github/workflows/_vinted-scanner-template.yml` | Reusable workflow: installs deps, materialises `Config.py` from a secret, runs the scanner, commits the state file back to `master`. |
-| `.github/workflows/vinted-scanner-michele.yml` | Scheduled caller for one profile. |
-| `.github/workflows/vinted-scanner-sara.yml` | Scheduled caller for a second profile. |
+| `.github/workflows/vinted-scanner-sample.yml` | Scheduled sample caller for one profile. |
 | `Config.py` | **Not in the repo.** Your configuration — contains your bot token, so keep it out of git. |
 | `excluded_keywords.txt` | **Optional, not in the repo.** One keyword per line. |
-| `vinted_items.txt` | Generated. One item ID per line; this is the deduplication state. |
+| `already_notified_items.txt` | Generated. One item ID per line; this is the deduplication state. |
 
 ## Requirements
 
@@ -85,7 +84,7 @@ cp Config.sample.py Config.py
 python3 vinted_scanner.py
 ```
 
-Before the first real run, consider **priming the state file**: leave `telegram_bot_token` and `telegram_chat_id` empty and run the script once. It will walk every query and write every current item ID to `vinted_items.txt` without notifying you, so you don't get flooded by a few hundred messages covering listings that were already there. Fill the Telegram values in afterwards and you'll only hear about genuinely new listings.
+Before the first real run, consider **priming the state file**: leave `telegram_bot_token` and `telegram_chat_id` empty and run the script once. It will walk every query and write every current item ID to `already_notified_items.txt` without notifying you, so you don't get flooded by a few hundred messages covering listings that were already there. Fill the Telegram values in afterwards and you'll only hear about genuinely new listings.
 
 Add a `.gitignore` if you plan to push your own fork:
 
@@ -168,7 +167,7 @@ Matching details worth knowing:
 - Comparison is **case- and accent-insensitive**. Text is normalised with NFKD and stripped of combining marks, so `sacoche` matches `Sacoche` and `Sacôche`.
 - A keyword is matched against the item **title plus the item's accessibility label** (a short description string Vinted returns alongside each listing).
 - Matching is a plain **substring** test, not word-based. `top` will also exclude anything containing "laptop" — prefer longer, specific keywords.
-- Excluded items are **not** written to `vinted_items.txt`, so they are re-checked on every run. Removing a keyword makes matching items notifiable again.
+- Excluded items are **not** written to `already_notified_items.txt`, so they are re-checked on every run. Removing a keyword makes matching items notifiable again.
 - If the file is missing, nothing is excluded and the script just logs that fact.
 
 ## Telegram setup
@@ -200,7 +199,7 @@ Messages are sent as HTML. When the listing has a photo the script uses `sendPho
 
 ## State file
 
-`vinted_items.txt` is a flat list of item IDs, one per line, appended as items are notified. Delete it to reset the scanner — the next run will treat everything it finds as new, so re-prime it as described in [Quick start](#quick-start) if you don't want the flood.
+`already_notified_items.txt` is a flat list of item IDs, one per line, appended as items are notified. Delete it to reset the scanner — the next run will treat everything it finds as new, so re-prime it as described in [Quick start](#quick-start) if you don't want the flood.
 
 ## Running on a schedule
 
@@ -214,7 +213,7 @@ crontab -e
 */15 * * * * cd /path/to/VintedScanner && /usr/bin/python3 vinted_scanner.py >> /path/to/vinted.log 2>&1
 ```
 
-`cd` into the repository first: `vinted_items.txt` and `excluded_keywords.txt` are opened as **relative paths**, so they land in the working directory rather than next to the script.
+`cd` into the repository first: `already_notified_items.txt` and `excluded_keywords.txt` are opened as **relative paths**, so they land in the working directory rather than next to the script.
 
 ### GitHub Actions
 
@@ -226,7 +225,7 @@ The workflows run the scanner in CI and commit the updated state file back to `m
 2. Installs `requirements.txt`.
 3. Writes the contents of the `vinted_config` secret verbatim into `Config.py` via a heredoc.
 4. Runs `python3 vinted_scanner.py`.
-5. Merges the run's `vinted_items.txt` with the copy on `origin/master` (`sort -u`), commits as `github-actions[bot]` and pushes. Same for `vinted_logs.txt`.
+5. Merges the run's `already_notified_items.txt` with the copy on `origin/master` (`sort -u`), commits as `github-actions[bot]` and pushes. Same for `vinted_logs.txt`.
 
 It declares `permissions: contents: write` so the default `GITHUB_TOKEN` can push, and a `concurrency` group of `vinted-scanner-master` with `cancel-in-progress: false`, so runs from different profiles queue up instead of racing each other to push.
 
@@ -234,8 +233,7 @@ It declares `permissions: contents: write` so the default `GITHUB_TOKEN` can pus
 
 | Workflow | Schedule (UTC) | Secret |
 |---|---|---|
-| `vinted-scanner-michele.yml` | `7,22,37,52 * * * *` | `VINTED_CONFIG_MICHELE` |
-| `vinted-scanner-sara.yml` | `12,27,42,57 * * * *` | `VINTED_CONFIG_SARA` |
+| `vinted-scanner-sample.yml` | `7,22,37,52 * * * *` | `VINTED_CONFIG_SAMPLE` |
 
 Both are every 15 minutes, offset by 5 minutes so the two jobs don't collide on the shared state file. Both also expose `workflow_dispatch` for manual runs from the Actions tab.
 
@@ -278,7 +276,7 @@ Things the code does today that are worth being aware of before you rely on it:
   - name: Run scanner
     run: python3 vinted_scanner.py 2>&1 | tee -a vinted_logs.txt
   ```
-- **First CI run can fail on `vinted_items.txt`** for the same reason: if no new items were found, the file was never created and `cp` fails. Committing an empty `vinted_items.txt` to `master`, or adding `touch vinted_items.txt vinted_logs.txt` before the copy, fixes it permanently.
+- **First CI run can fail on `already_notified_items.txt`** for the same reason: if no new items were found, the file was never created and `cp` fails. Committing an empty `already_notified_items.txt` to `master`, or adding `touch already_notified_items.txt vinted_logs.txt` before the copy, fixes it permanently.
 - **The whole config lives in a secret**, bot token included. Anyone who can edit workflows in this repo can exfiltrate it — keep write access tight.
 - **The state file is committed**, so on a public repo everyone can see the IDs of the listings you have been tracking.
 - **No LICENSE file is present** even though the project is described as GPL-3.0. Add one if you publish a fork.
@@ -293,7 +291,7 @@ Things the code does today that are worth being aware of before you rely on it:
 | `ModuleNotFoundError: No module named 'Config'` | `Config.py` doesn't exist. Copy it from `Config.sample.py`. |
 | `AttributeError: module 'Config' has no attribute 'pages'` | A key is missing from `Config.py`. All six settings must be defined. |
 | `Vinted response did not contain an items list` | The session wasn't accepted, the endpoint or parameters changed, or you're being rate-limited. Check the logged status code and the URL. |
-| Nothing is ever notified | Token or chat ID empty, everything filtered out by `excluded_keywords.txt`, or every ID is already in `vinted_items.txt`. The per-page tallies in the log tell you which. |
+| Nothing is ever notified | Token or chat ID empty, everything filtered out by `excluded_keywords.txt`, or every ID is already in `already_notified_items.txt`. The per-page tallies in the log tell you which. |
 | Telegram notification failed, status 400 | Usually a bad `chat_id`, or a photo URL Telegram can't fetch. |
 | Telegram notification failed, status 403 | The bot was never started by the user, or was removed from the group/channel. |
 | Duplicate alerts after a CI run | The state-file commit didn't land — check the push step of the previous run. |
