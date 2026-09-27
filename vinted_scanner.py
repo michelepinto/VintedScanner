@@ -179,7 +179,7 @@ def load_excluded_keywords():
 
     return keywords
 
-def is_excluded(item_title, item_description, excluded_keywords, log_excluded):
+def is_excluded(item_id, item_title, item_description, excluded_keywords, log_excluded):
     if not excluded_keywords:
         return False
 
@@ -188,7 +188,7 @@ def is_excluded(item_title, item_description, excluded_keywords, log_excluded):
     for keyword in excluded_keywords:
         if keyword in text:
             if log_excluded:
-                logger.info(f"Excluded item - matching keyword: '{keyword}'")
+                f"Excluded item [{item_id}] - matching keyword: '{keyword}'"
             return True
 
     return False
@@ -314,7 +314,7 @@ def main(log_excluded=False):
                 item_image = item_photo.get("full_size_url")
     
                 # Skip items whose title or description match any excluded keyword
-                if is_excluded(item_title, item_description, excluded_keywords, log_excluded):
+                if is_excluded(item_id, item_title, item_description, excluded_keywords, log_excluded):
                     # logger.info(f"Excluding item [{item_id}]: {item_title}")
                     excluded_counters += 1
                     continue
