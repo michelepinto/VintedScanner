@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
+import argparse
 import sys
 import Config
 import logging
 import requests
 import unicodedata
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "--log_excluded",
+    action="store_true",
+    help="Log excluded items and the matching keyword"
+)
+
+args = parser.parse_args()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -168,17 +179,19 @@ def load_excluded_keywords():
 
     return keywords
 
-def is_excluded(item_title, item_description, excluded_keywords):
+def is_excluded(item_title, item_description, excluded_keywords, log_excluded):
     if not excluded_keywords:
         return False
 
     text = normalize(f"{item_title} {item_description}")
+
     for keyword in excluded_keywords:
         if keyword in text:
-            # logger.info(f"Excluded item - matching keyword: '{keyword}'")
+            if log_excluded:
+                logger.info(f"Excluded item - matching keyword: '{keyword}'")
             return True
+
     return False
-    # return any(keyword in text for keyword in excluded_keywords)
 
 def get_user_details(user_id, session):
     try:
@@ -200,7 +213,7 @@ def get_user_details(user_id, session):
         logger.error(f"Unable to fetch Vinted user {user_id}: {e}")
         return None
 
-def main():
+def main(log_excluded=False):
 
     logger.info("")
     logger.info("========================================")
@@ -301,7 +314,7 @@ def main():
                 item_image = item_photo.get("full_size_url")
     
                 # Skip items whose title or description match any excluded keyword
-                if is_excluded(item_title, item_description, excluded_keywords):
+                if is_excluded(item_title, item_description, excluded_keywords, log_excluded):
                     # logger.info(f"Excluding item [{item_id}]: {item_title}")
                     excluded_counters += 1
                     continue
@@ -338,4 +351,4 @@ def main():
             page += 1
 
 if __name__ == "__main__":
-    main()
+    main(args.log_excluded)
