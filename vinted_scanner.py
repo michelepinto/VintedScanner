@@ -188,8 +188,9 @@ def is_excluded(item_id, item_title, item_description, excluded_keywords, log_ex
     for keyword in excluded_keywords:
         if keyword in text:
             if log_excluded:
-                logger.info(f"Excluded item [{item_id}] - matching keyword: '{keyword}'")
-                return True
+                logger.info(f"Excluded item [{item_id}] - matching keyword: '{keyword}'"                )
+
+            return True
 
     return False
 
