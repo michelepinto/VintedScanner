@@ -93,13 +93,20 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
     if seller:
         import pycountry
     
-        country_iso_code = seller.get("country_iso_code", "N/A")
-        country = pycountry.countries.get(alpha_2=country_iso_code)
-    
-        location = country.name if country else country_iso_code
-    
+        country_iso_code = (seller.get("country_iso_code") or "").upper()
+
+        if len(country_iso_code) == 2:
+            country_flag = "".join(
+                chr(ord(char) + 127397)
+                for char in country_iso_code
+            )
+        else:
+            country_flag = ""
+        
         city = (seller.get("city") or "").strip()
-    
+        
+        location = country_flag
+        
         if city:
             location += f" · {city}"
     
