@@ -108,7 +108,7 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
         location = country_flag
         
         if city:
-            location += f" · {city}"
+            location += f" {city}"
     
         seller_info = (
             f"👤 {seller.get('login', 'N/D')} · "
