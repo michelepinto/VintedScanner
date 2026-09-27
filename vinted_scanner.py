@@ -116,7 +116,7 @@ def send_telegram_message(item_title, item_price, item_url, item_image, favourit
             f"📦 {seller.get('item_count', 0)} for sale · "
             f"{seller.get('total_items_count', 0)} total · "
             f"👥 {seller.get('followers_count', 0)}\n"
-            f"📍 {location}"
+            f"{location}"
         )
     
         caption_lines.append("")
