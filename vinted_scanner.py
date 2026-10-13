@@ -14,6 +14,12 @@ parser.add_argument(
     help="Log excluded items and the matching keyword"
 )
 
+parser.add_argument(
+    "--notification_disabled",
+    action="store_true",
+    help="Disable Telegram notifications"
+)
+
 args = parser.parse_args()
 
 logging.basicConfig(
@@ -221,7 +227,7 @@ def get_user_details(user_id, session):
         logger.error(f"Unable to fetch Vinted user {user_id}: {e}")
         return None
 
-def main(log_excluded=False):
+def main(log_excluded=False, notification_disabled=False):
 
     logger.info("")
     logger.info("========================================")
@@ -330,16 +336,17 @@ def main(log_excluded=False):
                 # Check if the item has already been notified to prevent sending it again
                 if item_id not in already_notified_items:
 
-                    notified_counter += 1
-                    
-                    user = item.get("user") or {}
-                    user_id = user.get("id")
-
-                    seller = get_user_details(user_id, session)
+                    if not notification_disabled:
+                        notified_counter += 1
                         
-                    # Send Telegram notifications if configured
-                    if Config.telegram_bot_token and Config.telegram_chat_id:
-                        send_telegram_message(item_title, item_price, item_url, item_image, favourite_count, seller)
+                        user = item.get("user") or {}
+                        user_id = user.get("id")
+    
+                        seller = get_user_details(user_id, session)
+                            
+                        # Send Telegram notifications if configured
+                        if Config.telegram_bot_token and Config.telegram_chat_id:
+                            send_telegram_message(item_title, item_price, item_url, item_image, favourite_count, seller)
     
                     # Mark item as notified and save it
                     already_notified_items.add(item_id)
@@ -359,4 +366,4 @@ def main(log_excluded=False):
             page += 1
 
 if __name__ == "__main__":
-    main(args.log_excluded)
+    main(args.log_excluded, args.notification_disabled)
