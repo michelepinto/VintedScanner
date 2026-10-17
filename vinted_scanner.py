@@ -595,6 +595,9 @@ def main(log_excluded=False, notification_disabled=False):
                                 decision,
                                 classification,
                             )
+
+                        else:
+                            logger.info("AI classification not needed"                            )
                         
                         notified_counter += 1
                         
