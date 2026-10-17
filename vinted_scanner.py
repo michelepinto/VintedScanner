@@ -183,6 +183,7 @@ openai_client = (
 def should_classify_phone(title, description):
     """Avoid sending unrelated listings to the AI classifier."""
     if not getattr(Config, "phone_classifier_enabled", False):
+        logger.info("AI classification skipped 1")
         return False
 
     text = normalize(f"{title} {description}")
@@ -597,7 +598,7 @@ def main(log_excluded=False, notification_disabled=False):
                             )
 
                         else:
-                            logger.info("AI classification not needed"                            )
+                            logger.info("AI classification skipped")
                         
                         notified_counter += 1
                         
