@@ -9,6 +9,9 @@ vinted_api_url = "https://api.vinted.it"
 # Number of pages to scan for each request (default is 2)
 pages = 3
 
+phone_classifier_enabled=false
+openai_api_key=123abc
+
 # Vinted queries for research
 # "search_text" is the free search field, this field may be empty if you wish to search for the entire brand.
 # "attribute_ids[catalog]" is the category in which to eventually search, if the field is empty it will search in all categories. Vinted assigns a numeric ID to each category, e.g. 2996 is the ID for e-Book Reader
