@@ -591,7 +591,7 @@ def main(log_excluded=False, notification_disabled=False):
                             decision = classification["decision"]
                         
                             logger.info(
-                                "AI classification [%s] %s | result=%s | details=%s",
+                                "AI classification [%s] %s | price=%s | result=%s | details=%s",
                                 item_id,
                                 item_title,
                                 item_amount,
