@@ -185,7 +185,9 @@ def should_classify_phone(title, description):
     if not getattr(Config, "phone_classifier_enabled", False):
         logger.info("AI classification skipped 1")
         return False
-
+    else:
+        logger.info("AI classification not skipped 1")
+    
     text = normalize(f"{title} {description}")
     keywords = getattr(Config, "phone_classifier_keywords", [])
 
