@@ -576,7 +576,7 @@ def main(log_excluded=False, notification_disabled=False):
 
                     if not notification_disabled:
 
-
+                        logger.info("here 1")
                         
                         
                         # Run AI classification only for likely telephone listings.
