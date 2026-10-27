@@ -1,2 +1,2 @@
-pycountry
-requests
+pycountry==26.2.16
+requests==2.34.2
