@@ -1,92 +1,91 @@
 # Vinted Scanner
 
-A small Python scanner that polls [Vinted](https://www.vinted.it) for newly listed items matching your saved searches and pushes them to **Telegram** as soon as they appear.
+A lightweight Python application that monitors Vinted for newly listed items and sends automatic notifications through Telegram.
 
-Vinted has no real-time alerting for new listings. This script fills that gap: it runs on a schedule (cron or GitHub Actions), keeps a local record of every item it has already seen, and only notifies you about genuinely new ones.
+Vinted Scanner periodically checks your configured searches, identifies new listings, filters unwanted items using a customizable keyword blacklist, retrieves seller information and sends notifications with listing details.
 
-![Python](https://img.shields.io/badge/python-3.11-blue?style=flat-square&logo=python&logoColor=white)
-![Telegram](https://img.shields.io/badge/notifications-Telegram-26A5E4?style=flat-square&logo=telegram&logoColor=white)
-![License](https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square)
+It can run locally on any machine or server using cron, or automatically through GitHub Actions.
 
----
+## Features
 
-## Table of contents
-
-- [How it works](#how-it-works)
-- [Repository layout](#repository-layout)
-- [Requirements](#requirements)
-- [Quick start](#quick-start)
-- [Configuration](#configuration)
-  - [Config.py reference](#configpy-reference)
-  - [Building queries](#building-queries)
-  - [Finding catalog and brand IDs](#finding-catalog-and-brand-ids)
-- [Excluding keywords](#excluding-keywords)
-- [Telegram setup](#telegram-setup)
-- [What a notification looks like](#what-a-notification-looks-like)
-- [State file](#state-file)
-- [Running on a schedule](#running-on-a-schedule)
-  - [Cron](#cron)
-  - [GitHub Actions](#github-actions)
-- [Known quirks and limitations](#known-quirks-and-limitations)
-- [Troubleshooting](#troubleshooting)
-- [Credits and license](#credits-and-license)
-
----
+- **Automated monitoring:** Scan multiple Vinted searches in a single execution.
+- **Telegram notifications:** Receive alerts with listing links, photos, prices and seller information.
+- **Keyword exclusion:** Automatically filter unwanted listings using a customizable blacklist.
+- **Smart keyword matching:** Case-insensitive and accent-insensitive matching, including Italian special characters.
+- **Duplicate prevention:** Keep track of previously notified listings to avoid repeated alerts.
+- **Seller information:** Retrieve seller username, feedback, number of active listings, total listings, followers and location.
+- **Price information:** Display the listing price and the total price including Vinted buyer protection fees.
+- **Configurable pagination:** Control how many pages are scanned for each search.
+- **Diagnostic logging:** Track scanner activity and optionally identify which blacklist keyword excluded an item.
+- **Flexible execution:** Run manually, through cron or using GitHub Actions.
 
 ## How it works
 
-One run of `vinted_scanner.py` does the following:
+Each execution follows these steps:
 
-1. Loads the IDs of items already seen from `already_notified_items.txt` into memory.
-2. Loads exclusion keywords from `excluded_keywords.txt`, if that file exists.
-3. Opens a `requests.Session` and hits the storefront once (`vinted_url`) with browser-like headers so the session picks up the cookies the catalogue API expects.
-4. For every entry in `Config.queries`, requests `{vinted_api_url}/svc-catalogue/items` page by page, up to `Config.pages` pages. Treat any page with fewer than 96 items as the last page, and stop early.
-5. For every item returned:
-   - Skips it if the title or the item's accessibility label matches an excluded keyword.
-   - Skips it if the item ID is already in the notified set.
-   - Otherwise, fetches the seller's public profile (`{vinted_url}/api/v2/users/{id}`), sends a Telegram message, then records the ID in memory and appends it to `already_notified_items.txt`.
-6. Logs a per-page tally of items ignored, already notified and newly notified.
+1. Load previously notified listing IDs from `already_notified_items.txt`.
+2. Load excluded keywords from `excluded_keywords.txt`.
+3. Initialize an HTTP session with Vinted.
+4. Execute each search configured in `Config.py`.
+5. Retrieve listings from the Vinted catalogue endpoint, scanning up to the configured number of pages.
+6. Check each listing against the exclusion keywords.
+7. Skip listings that have already been notified.
+8. Retrieve additional information about the seller.
+9. Send a Telegram notification containing the listing information.
+10. Save the listing ID to prevent duplicate notifications in future executions.
 
-Logging goes to **stdout** with timestamps, at `INFO` level. Nothing is written to a log file by the script itself.
+The scanner processes up to 96 listings per page and stops when fewer than 96 items are returned.
 
-## Repository layout
+## Repository structure
 
-| Path | Purpose |
+| File | Description |
 |---|---|
-| `vinted_scanner.py` | The whole scanner. No CLI arguments — everything comes from `Config.py`. |
-| `Config.sample.py` | Template configuration. Copy it to `Config.py` and edit. |
-| `requirements.txt` | `requests`, `pycountry`. |
-| `.github/workflows/_vinted-scanner-template.yml` | Reusable workflow: installs deps, materialises `Config.py` from a secret, runs the scanner, commits the state file back to `master`. |
-| `.github/workflows/vinted-scanner-sample.yml` | Scheduled sample caller for one profile. |
-| `Config.py` | **Not in the repo.** Your configuration — contains your bot token, so keep it out of git. |
-| `excluded_keywords.txt` | **Optional, not in the repo.** One keyword per line. |
-| `already_notified_items.txt` | Generated. One item ID per line; this is the deduplication state. |
+| `vinted_scanner.py` | Main scanner application |
+| `Config.sample.py` | Example configuration |
+| `Config.py` | Your private configuration (not included in Git) |
+| `requirements.txt` | Python dependencies |
+| `excluded_keywords.txt` | Optional keyword blacklist |
+| `already_notified_items.txt` | Automatically generated notification history |
+| `.github/workflows/` | GitHub Actions workflows |
 
 ## Requirements
 
-- Python 3.9 or newer (CI pins 3.11)
-- A Telegram bot token and a chat ID
-- Dependencies from `requirements.txt`:
-  - `requests` — all HTTP calls
-  - `pycountry` — turns the seller's ISO country code into a readable country name
+- Python 3.9 or newer.
+- A Vinted account is not required by the current implementation.
+- A Telegram bot and chat ID for notifications.
+- Internet connectivity.
 
-## Quick start
+Python dependencies:
+
+- `requests`: HTTP requests to Vinted and Telegram.
+- `pycountry`: Country information for seller details.
+
+## Installation
+
+Clone the repository:
 
 ```bash
 git clone https://github.com/michelepinto/VintedScanner.git
 cd VintedScanner
-
-pip3 install -r requirements.txt
-
-cp Config.sample.py Config.py
-# edit Config.py: bot token, chat ID, country URLs, queries
-
-python3 vinted_scanner.py
 ```
 
-Before the first real run, consider **priming the state file**: leave `telegram_bot_token` and `telegram_chat_id` empty and run the script once. It will walk every query and write every current item ID to `already_notified_items.txt` without notifying you, so you don't get flooded by a few hundred messages covering listings that were already there. Fill the Telegram values in afterwards and you'll only hear about genuinely new listings.
+Install dependencies:
 
-Add a `.gitignore` if you plan to push your own fork:
+```bash
+pip3 install -r requirements.txt
+```
+
+Create your configuration file:
+
+```bash
+cp Config.sample.py Config.py
+```
+
+Edit `Config.py` with your Vinted marketplace, Telegram credentials and search queries.
+
+**Important:** Never commit `Config.py` because it contains your Telegram bot token.
+
+Add the following to `.gitignore`:
 
 ```gitignore
 Config.py
@@ -95,210 +94,429 @@ __pycache__/
 
 ## Configuration
 
-`Config.py` is imported as a normal Python module, so every name below must exist — a missing one raises `AttributeError` at runtime.
+All application settings are managed through `Config.py`.
 
-### Config.py reference
+### Telegram settings
 
-| Setting | Type | Notes |
+Create a Telegram bot using [@BotFather](https://t.me/BotFather).
+
+Configure the credentials:
+
+```python
+telegram_bot_token = "YOUR_BOT_TOKEN"
+telegram_chat_id = "YOUR_CHAT_ID"
+```
+
+To retrieve your chat ID:
+
+1. Start a conversation with your bot.
+2. Send it a message.
+3. Open the following URL, replacing the token:
+
+```text
+https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
+```
+
+4. Find `message.chat.id` in the response.
+
+For groups, add the bot to the group and retrieve the group ID. For channels, add the bot as an administrator.
+
+### Vinted marketplace
+
+Configure the marketplace URLs according to your country:
+
+```python
+vinted_url = "https://www.vinted.it"
+vinted_api_url = "https://api.vinted.it"
+```
+
+Examples for other marketplaces:
+
+| Country | Marketplace URL | API URL |
 |---|---|---|
-| `telegram_bot_token` | `str` | From [@BotFather](https://t.me/BotFather). If this or the chat ID is empty, no message is sent — but items are still marked as seen. |
-| `telegram_chat_id` | `str` | Your user, group or channel ID. |
-| `vinted_url` | `str` | Storefront base URL, e.g. `https://www.vinted.it`. Used for the session bootstrap, item links and seller lookups. |
-| `vinted_api_url` | `str` | API base URL, e.g. `https://api.vinted.it`. Must match the storefront's country. |
-| `pages` | `int` | Pages to fetch per query. Falsy values fall back to 2. A page holds up to 96 items. |
-| `queries` | `list[dict]` | One dict per saved search. See below. |
+| Italy | `https://www.vinted.it` | `https://api.vinted.it` |
+| France | `https://www.vinted.fr` | `https://api.vinted.fr` |
+| Germany | `https://www.vinted.de` | `https://api.vinted.de` |
+| Spain | `https://www.vinted.es` | `https://api.vinted.es` |
 
-Change the TLD on both URLs together to scan another market — `.fr`, `.es`, `.de`, `.nl`, and so on.
+The storefront and API URLs must always refer to the same marketplace.
 
-### Building queries
+### Pagination
 
-Each entry in `queries` is passed straight through as query-string parameters. The `page` key is injected by the script, so you don't set it yourself.
+Configure the number of pages to scan for each search:
+
+```python
+pages = 3
+```
+
+Each page can contain up to 96 listings.
+
+For example:
+
+- `pages = 1`: Up to 96 listings per search.
+- `pages = 3`: Up to 288 listings per search.
+- `pages = 5`: Up to 480 listings per search.
+
+The scanner stops earlier if Vinted returns fewer than 96 listings.
+
+### Search queries
+
+You can configure multiple independent searches in the `queries` list.
+
+Example:
 
 ```python
 queries = [
     {
         'search_text': '',
         'attribute_ids[catalog]': '',
-        'attribute_ids[brand]': '417',      # brand-only search
+        'attribute_ids[brand]': '417',
         'order': 'newest_first',
     },
     {
         'search_text': 't-shirt',
         'attribute_ids[catalog]': '',
-        'attribute_ids[brand]': '',         # free-text search
+        'attribute_ids[brand]': '',
         'order': 'newest_first',
     },
     {
         'search_text': '',
-        'attribute_ids[catalog]': '2996',   # category-only search, e.g. e-book readers
+        'attribute_ids[catalog]': '2996',
         'attribute_ids[brand]': '',
         'order': 'newest_first',
     },
 ]
 ```
 
-| Key | Meaning |
+Available parameters:
+
+| Parameter | Description |
 |---|---|
-| `search_text` | Free-text keywords. Leave empty to match everything within the other filters. |
-| `attribute_ids[catalog]` | Numeric category ID. Empty means all categories. |
-| `attribute_ids[brand]` | Numeric brand ID. Empty means all brands. |
-| `order` | `newest_first`, `relevance`, `price_high_to_low` or `price_low_to_high`. `newest_first` is what you want for alerting. |
+| `search_text` | Free-text search. Can be left empty. |
+| `attribute_ids[catalog]` | Vinted category ID. |
+| `attribute_ids[brand]` | Vinted brand ID. |
+| `order` | Search ordering. |
 
-Any other filter the catalogue endpoint accepts (price bounds, size, condition, …) can be added as an extra key — the dict is forwarded verbatim.
+Supported ordering values include:
 
-### Finding catalog and brand IDs
+- `newest_first`
+- `relevance`
+- `price_high_to_low`
+- `price_low_to_high`
 
-Apply the filters you want on the Vinted website, then read the numeric IDs out of the resulting URL's query string and copy them into your query dict. Brand `417`, for example, is Louis Vuitton; catalog `2996` is e-book readers.
+For monitoring newly published listings, `newest_first` is recommended.
 
-## Excluding keywords
+You can combine keywords, categories and brands to create more specific searches.
 
-Create `excluded_keywords.txt` next to the script, one keyword per line. Lines starting with `#` and blank lines are ignored:
+**Finding category and brand IDs**
+
+The easiest way is to navigate to Vinted, apply your desired filters and inspect the resulting URL.
+
+The numeric IDs are included in the search URL as query parameters.
+
+For example:
+
+- Brand ID `417`: Louis Vuitton.
+- Category ID `2996`: Example category from the Vinted catalogue.
+
+The IDs may vary as Vinted changes its catalogue.
+
+## Excluding unwanted listings
+
+The scanner supports a customizable blacklist through `excluded_keywords.txt`.
+
+Create the file in the project root directory:
 
 ```text
-# noise I never want to see
+# Unwanted or irrelevant listings
+
 replica
 fake
+counterfeit
 bundle
 cover
+broken
+damaged
+chimica
 ```
 
-Matching details worth knowing:
+Add one keyword per line.
 
-- Comparison is **case- and accent-insensitive**. Text is normalised with NFKD and stripped of combining marks, so `sacoche` matches `Sacoche` and `Sacôche`.
-- A keyword is matched against the item **title plus the item's accessibility label** (a short description string Vinted returns alongside each listing).
-- Matching is a plain **substring** test, not word-based. `top` will also exclude anything containing "laptop" — prefer longer, specific keywords.
-- Excluded items are **not** written to `already_notified_items.txt`, so they are re-checked on every run. Removing a keyword makes matching items notifiable again.
-- If the file is missing, nothing is excluded and the script just logs that fact.
+Lines starting with `#` and empty lines are ignored.
 
-## Telegram setup
+### How keyword filtering works
 
-1. Message [@BotFather](https://t.me/BotFather), send `/newbot`, and copy the token into `telegram_bot_token`.
-2. Get your chat ID:
-   - **Direct messages:** send any message to your bot, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and read `message.chat.id`.
-   - **Groups:** add the bot to the group, post a message, and use the same endpoint. Group IDs are negative.
-   - **Channels:** add the bot as an administrator and use the `@channelname` or the numeric `-100…` ID.
-3. Put the value in `telegram_chat_id`.
+The scanner checks both:
 
-## What a notification looks like
+- Listing title.
+- Listing accessibility description (`accessibility_label`).
 
-Messages are sent as HTML. When the listing has a photo the script uses `sendPhoto` with the caption below; otherwise it falls back to `sendMessage`.
+Matching is:
+
+- Case-insensitive.
+- Accent-insensitive.
+- Based on substring matching.
+
+For example, the keyword:
 
 ```text
-🔗 Louis Vuitton Pochette Ac…
-💰 85,00 € (89,70 € w/fee) · ❤️ 12
-
-👤 someseller · ⭐ 214/220
-📦 37 for sale · 190 total · 👥 58
-📍 Italy · Milano
+chimica
 ```
 
-- The title is HTML-escaped and truncated to 30 characters plus an ellipsis when it runs past 33.
-- The price line shows the asking price and, in brackets, the total including buyer protection. The currency symbol is hardcoded to `€`.
-- The heart counter only appears when the listing has at least one favourite.
-- The seller block is omitted if the profile lookup fails. The country name is resolved from the ISO code via `pycountry`, with the city appended when Vinted exposes one.
+will match:
 
-## State file
+- `Chimica`
+- `CHIMICA`
+- `Prodotto di chimica`
+- `chimicà`
 
-`already_notified_items.txt` is a flat list of item IDs, one per line, appended as items are notified. Delete it to reset the scanner — the next run will treat everything it finds as new, so re-prime it as described in [Quick start](#quick-start) if you don't want the flood.
+The normalization process uses Unicode NFKD decomposition, removing accent differences before comparison.
 
-## Running on a schedule
+**Important:** Matching uses substrings, not complete words. For example, `top` will also match `laptop`.
 
-### Cron
+Excluded listings are not added to the notification history. They will therefore be checked again during subsequent executions.
+
+If you remove a keyword from the blacklist, previously excluded listings can become eligible for notification.
+
+### Debugging excluded listings
+
+To display which keyword caused a listing to be excluded:
+
+```bash
+python3 vinted_scanner.py --log_excluded
+```
+
+Example log:
+
+```text
+INFO Excluded item [123456789] - matching keyword: 'chimica'
+```
+
+This is particularly useful when investigating why a listing is being filtered or why an expected notification was not sent.
+
+## Telegram notifications
+
+When a new listing is found, the scanner retrieves the seller's public profile and generates a Telegram notification.
+
+If the listing has a photo, Telegram receives an image with a caption. Otherwise, a text message is sent.
+
+Example:
+
+```text
+🔗 Louis Vuitton Pochette Accessoires
+
+💰 85,00 € (89,70 € w/fee) · ❤️ 12
+
+👤 seller_name · ⭐ 214/220
+📦 37 for sale · 190 total · 👥 58
+🇮🇹 Milano
+```
+
+Notification information includes:
+
+- Listing title and direct link.
+- Listing price.
+- Total price including buyer protection fees.
+- Number of favourites.
+- Seller username.
+- Positive feedback and total feedback.
+- Number of active listings.
+- Total number of listings.
+- Number of followers.
+- Seller country and city, when available.
+
+The seller information is retrieved separately from Vinted. If the seller lookup fails, the listing can still be processed without seller details.
+
+The current implementation formats prices using the euro symbol.
+
+## Listing history and duplicate prevention
+
+The scanner maintains a local file:
+
+```text
+already_notified_items.txt
+```
+
+This file contains the IDs of listings already processed.
+
+Each ID is stored on a separate line.
+
+Example:
+
+```text
+123456789
+123456790
+123456791
+```
+
+The file is automatically created and updated by the scanner.
+
+Do not delete this file unless you intentionally want to reset the notification history.
+
+Deleting it will cause existing listings to be treated as new and potentially generate duplicate notifications.
+
+### Initial setup
+
+To avoid receiving notifications for all existing listings when starting the scanner for the first time:
+
+1. Leave `telegram_bot_token` and `telegram_chat_id` empty in `Config.py`.
+2. Run the scanner once.
+3. The scanner will process the configured searches and populate `already_notified_items.txt` without sending Telegram notifications.
+4. Configure your Telegram credentials.
+5. Run the scanner normally.
+
+From that point onwards, notifications will be sent for newly discovered listings.
+
+## Running the scanner
+
+Execute manually:
+
+```bash
+python3 vinted_scanner.py
+```
+
+Disable Telegram notifications for a run:
+
+```bash
+python3 vinted_scanner.py --notification_disabled
+```
+
+Display excluded listings and their matching keywords:
+
+```bash
+python3 vinted_scanner.py --log_excluded
+```
+
+Both options can be combined:
+
+```bash
+python3 vinted_scanner.py --log_excluded --notification_disabled
+```
+
+The application writes timestamped logs to standard output, making it suitable for both interactive execution and scheduled environments.
+
+## Scheduling with Cron
+
+The scanner is designed to run periodically.
+
+For example, to execute it every 15 minutes:
+
+Open the crontab:
 
 ```bash
 crontab -e
 ```
 
+Add:
+
 ```cron
-*/15 * * * * cd /path/to/VintedScanner && /usr/bin/python3 vinted_scanner.py >> /path/to/vinted.log 2>&1
+*/15 * * * * cd /path/to/VintedScanner && /usr/bin/python3 vinted_scanner.py >> /path/to/vinted_scanner.log 2>&1
 ```
 
-`cd` into the repository first: `already_notified_items.txt` and `excluded_keywords.txt` are opened as **relative paths**, so they land in the working directory rather than next to the script.
+Make sure to replace `/path/to/VintedScanner` with the actual project directory.
 
-### GitHub Actions
+The working directory is important because the scanner reads and writes `already_notified_items.txt` and `excluded_keywords.txt` using relative paths.
 
-The workflows run the scanner in CI and commit the updated state file back to `master`, which means the deduplication state survives between runs without any server of your own.
+## Running with GitHub Actions
 
-**`_vinted-scanner-template.yml`** is a reusable workflow (`workflow_call`) taking a single required secret, `vinted_config`. It:
+GitHub Actions can be used to execute the scanner automatically without maintaining your own server.
 
-1. Checks out the repo and sets up Python 3.11.
-2. Installs `requirements.txt`.
-3. Writes the contents of the `vinted_config` secret verbatim into `Config.py` via a heredoc.
-4. Runs `python3 vinted_scanner.py`.
-5. Merges the run's `already_notified_items.txt` with the copy on `origin/master` (`sort -u`), commits as `github-actions[bot]` and pushes. Same for `vinted_logs.txt`.
+The recommended approach is to:
 
-It declares `permissions: contents: write` so the default `GITHUB_TOKEN` can push, and a `concurrency` group of `vinted-scanner-master` with `cancel-in-progress: false`, so runs from different profiles queue up instead of racing each other to push.
+1. Store your private configuration in GitHub Actions Secrets.
+2. Create a scheduled workflow.
+3. Install Python dependencies.
+4. Generate `Config.py` from the stored secret.
+5. Execute `vinted_scanner.py`.
+6. Persist `already_notified_items.txt` between executions.
 
-**Caller workflows** are thin. Each one is a profile with its own schedule and its own config secret:
-
-| Workflow | Schedule (UTC) | Secret |
-|---|---|---|
-| `vinted-scanner-sample.yml` | `7,22,37,52 * * * *` | `VINTED_CONFIG_SAMPLE` |
-
-Both are every 15 minutes, offset by 5 minutes so the two jobs don't collide on the shared state file. Both also expose `workflow_dispatch` for manual runs from the Actions tab.
-
-**Adding a profile:**
-
-1. Create a repository secret, e.g. `VINTED_CONFIG_ALEX`, and paste the *entire contents* of that person's `Config.py` into it — no surrounding quotes, no extra indentation, since the value is inserted into the heredoc as-is.
-2. Copy one of the caller workflows, rename it, pick cron minutes that don't clash with the existing ones, and point `secrets.vinted_config` at the new secret.
+Example workflow structure:
 
 ```yaml
-name: Vinted Scanner Alex
+name: Vinted Scanner
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "2,17,32,47 * * * *"
+    - cron: "*/15 * * * *"
 
 permissions:
   contents: write
 
 jobs:
   scan:
-    uses: ./.github/workflows/_vinted-scanner-template.yml
-    secrets:
-      vinted_config: ${{ secrets.VINTED_CONFIG_ALEX }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create configuration
+        env:
+          VINTED_CONFIG: ${{ secrets.VINTED_CONFIG }}
+        run: |
+          printf '%s\n' "$VINTED_CONFIG" > Config.py
+
+      - name: Run scanner
+        run: python3 vinted_scanner.py
+
+      - name: Commit notification history
+        run: |
+          touch already_notified_items.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add already_notified_items.txt
+          git diff --cached --quiet || git commit -m "Update Vinted notification history"
+          git push
 ```
 
-Notes on the CI setup:
+Create a repository secret named `VINTED_CONFIG` containing the complete contents of your private `Config.py`.
 
-- Cron in GitHub Actions is **UTC**, and scheduled runs are best-effort — they are frequently delayed during busy periods, so treat "every 15 minutes" as a target rather than a guarantee.
-- `excluded_keywords.txt` is read from the checkout, so it has to be **committed to the repo** to take effect in CI. It is shared by every profile.
-- Scheduled workflows are disabled automatically after 60 days without repository activity. The state-file commits count as activity, so this normally takes care of itself.
-- Under Settings → Actions → General, workflow permissions must allow read *and* write for the push step to succeed.
+Ensure that GitHub Actions has permission to write to the repository.
 
-## Known quirks and limitations
+**Note:** GitHub Actions scheduled workflows use UTC and are not guaranteed to start exactly at the configured time. They may be delayed during periods of high load.
 
-Things the code does today that are worth being aware of before you rely on it:
-
-- **The "Commit updated logs" step fails.** The scanner logs to stdout and never creates `vinted_logs.txt`, so `cp vinted_logs.txt …` errors out and the job ends red even when the scan itself worked. Either drop that step, or produce the file:
-  ```yaml
-  - name: Run scanner
-    run: python3 vinted_scanner.py 2>&1 | tee -a vinted_logs.txt
-  ```
-- **First CI run can fail on `already_notified_items.txt`** for the same reason: if no new items were found, the file was never created and `cp` fails. Committing an empty `already_notified_items.txt` to `master`, or adding `touch already_notified_items.txt vinted_logs.txt` before the copy, fixes it permanently.
-- **The whole config lives in a secret**, bot token included. Anyone who can edit workflows in this repo can exfiltrate it — keep write access tight.
-- **The state file is committed**, so on a public repo everyone can see the IDs of the listings you have been tracking.
-- **No LICENSE file is present** even though the project is described as GPL-3.0. Add one if you publish a fork.
-- **Unofficial API.** Vinted publishes no documented public API. Endpoint paths, parameter names and response shapes can change without notice, and aggressive polling can get you rate-limited or blocked. Keep the interval reasonable and check the platform's terms before running this at scale.
-- **One extra request per new item.** Seller details are fetched individually, so a run that discovers many new items makes many calls in quick succession.
-- **Currency is hardcoded to `€`.** Scanning a non-euro market will show the wrong symbol.
+If you use multiple independent workflows, ensure they do not overwrite each other's notification history. A shared state file should be protected against concurrent writes.
 
 ## Troubleshooting
 
-| Symptom | Likely cause |
+| Problem | Possible solution |
 |---|---|
-| `ModuleNotFoundError: No module named 'Config'` | `Config.py` doesn't exist. Copy it from `Config.sample.py`. |
-| `AttributeError: module 'Config' has no attribute 'pages'` | A key is missing from `Config.py`. All six settings must be defined. |
-| `Vinted response did not contain an items list` | The session wasn't accepted, the endpoint or parameters changed, or you're being rate-limited. Check the logged status code and the URL. |
-| Nothing is ever notified | Token or chat ID empty, everything filtered out by `excluded_keywords.txt`, or every ID is already in `already_notified_items.txt`. The per-page tallies in the log tell you which. |
-| Telegram notification failed, status 400 | Usually a bad `chat_id`, or a photo URL Telegram can't fetch. |
-| Telegram notification failed, status 403 | The bot was never started by the user, or was removed from the group/channel. |
-| Duplicate alerts after a CI run | The state-file commit didn't land — check the push step of the previous run. |
-| Wrong country's listings | `vinted_url` and `vinted_api_url` point at different markets. |
+| `ModuleNotFoundError: No module named 'Config'` | Copy `Config.sample.py` to `Config.py`. |
+| `AttributeError: module 'Config' has no attribute 'pages'` | Check that `pages` is defined in `Config.py`. |
+| No Telegram notifications | Verify your bot token and chat ID. |
+| Telegram error 400 | Check the chat ID and message parameters. |
+| Telegram error 403 | Start the bot or check its permissions in the group/channel. |
+| No listings returned | Check your search filters and marketplace URLs. |
+| Unexpected listings | Review your configured queries and blacklist. |
+| Expected listing excluded | Run with `--log_excluded` to identify the matching keyword. |
+| Duplicate notifications | Check whether `already_notified_items.txt` is preserved between executions. |
+| Seller details missing | The seller profile lookup may have failed. |
 
-## Credits and license
+## Limitations and considerations
 
-This project is a fork of [drego85/VintedScanner](https://github.com/drego85/VintedScanner) by Andrea Draghetti, reworked around a Telegram-only notification path, keyword exclusions, seller enrichment and a GitHub Actions runner.
+- The scanner uses Vinted's unofficial, undocumented internal API endpoints. They can change without notice.
+- Vinted may apply rate limits or other restrictions to automated requests.
+- Seller information requires an additional HTTP request for each new listing.
+- The scanner currently supports Telegram notifications only.
+- The currency symbol is currently hardcoded to EUR.
+- Excluded listings are evaluated again on every execution.
+- The notification history is stored locally, so scheduled environments must persist it between executions.
 
-Released under the **GNU General Public License v3.0**.
+Use reasonable scanning intervals and respect Vinted's applicable terms and conditions.
+
+## Credits
+
+This project is based on the original [VintedScanner](https://github.com/drego85/VintedScanner) by Andrea Draghetti, with additional functionality and adaptations.
+
+## License
+
+GNU General Public License v3.0 (GPL-3.0).
